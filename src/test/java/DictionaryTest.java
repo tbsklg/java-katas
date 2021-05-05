@@ -2,9 +2,11 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-/*
-Find the most similar word based on a dictionary.
-This algorithm uses the Levenshtein distance.
+/**
+ * Find the most similar word based on a dictionary.
+ * This algorithm is based on the Levenshtein distance.
+ *
+ * @see <a href="https://www.codewars.com/kata/5259510fc76e59579e0009d4">https://www.codewars.com/kata/5259510fc76e59579e0009d4</a>
  */
 public class DictionaryTest {
 
