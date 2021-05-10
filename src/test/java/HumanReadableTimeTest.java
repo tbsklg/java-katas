@@ -1,16 +1,9 @@
-import org.assertj.core.api.Assertions;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 public class HumanReadableTimeTest {
-
-    public static String makeReadable(int seconds) {
-        int hh = seconds / 3600;
-        int mm = seconds % 3600 / 60;
-        int ss = seconds % 60;
-
-        return String.format("%02d:%02d:%02d", hh, mm, ss);
-    }
 
     @ParameterizedTest
     @CsvSource({
@@ -26,6 +19,6 @@ public class HumanReadableTimeTest {
             "359999, 99:59:59",
     })
     void shouldMakeReadable(int seconds, String expected) {
-        Assertions.assertThat(makeReadable(seconds)).isEqualTo(expected);
+        assertThat(HumanReadableTime.makeReadable(seconds)).isEqualTo(expected);
     }
 }

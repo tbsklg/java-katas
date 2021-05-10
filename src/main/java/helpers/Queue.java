@@ -1,3 +1,5 @@
+package helpers;
+
 import java.util.NoSuchElementException;
 
 public class Queue {
@@ -19,7 +21,7 @@ public class Queue {
     }
 
     public String dequeue() {
-        if (isEmpty()) throw new NoSuchElementException("Queue underflow");
+        if (isEmpty()) throw new NoSuchElementException("helpers.Queue underflow");
         String item = q[head];
         q[head] = null;
         n--;
