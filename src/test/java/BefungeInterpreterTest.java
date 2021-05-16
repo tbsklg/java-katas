@@ -84,7 +84,7 @@ public class BefungeInterpreterTest {
     }
 
     private static class Interpreter {
-        private Token currentToken = new Token(Type.MOVE, ">");
+        private static final Token DEFAULT_TOKEN = new Token(Type.MOVE_RIGHT, null);
         private final Program program;
 
         private Interpreter(String code) {
@@ -102,89 +102,59 @@ public class BefungeInterpreterTest {
             var currentChar = program.currentChar();
 
             if (currentChar == '@') {
-                program.next();
-                currentToken = new Token(Type.EOF, null);
-                return currentToken;
+                return new Token(Type.EOF, null);
             }
 
             if (isDigit(currentChar)) {
-                program.next();
-                currentToken = new Token(Type.INTEGER, String.valueOf(currentChar));
-                return currentToken;
+                return new Token(Type.INTEGER, String.valueOf(currentChar));
             }
 
             if (currentChar == '+') {
-                program.next();
-                currentToken = new Token(Type.ADDITION, String.valueOf(currentChar));
-                return currentToken;
+                return new Token(Type.ADDITION, String.valueOf(currentChar));
             }
 
             if (currentChar == '-') {
-                program.next();
-                currentToken = new Token(Type.SUBSTRACTION, String.valueOf(currentChar));
-                return currentToken;
+                return new Token(Type.SUBSTRACTION, String.valueOf(currentChar));
             }
 
             if (currentChar == 'v') {
-                program.setDirection(ProgramDirection.DOWN);
-                program.next();
-                currentToken = new Token(Type.MOVE, null);
-                return currentToken;
+                return new Token(Type.MOVE_DOWN, null);
             }
 
             if (currentChar == '<') {
-                program.setDirection(ProgramDirection.LEFT);
-                program.next();
-                currentToken = new Token(Type.MOVE, null);
-                return currentToken;
+                return new Token(Type.MOVE_LEFT, null);
             }
 
             if (currentChar == '^') {
-                program.setDirection(ProgramDirection.UP);
-                program.next();
-                currentToken = new Token(Type.MOVE, null);
-                return currentToken;
+                return new Token(Type.MOVE_UP, null);
             }
 
             if (currentChar == '>') {
-                program.setDirection(ProgramDirection.RIGHT);
-                program.next();
-                currentToken = new Token(Type.MOVE, null);
-                return currentToken;
+                return new Token(Type.MOVE_RIGHT, null);
             }
 
             if (currentChar == '_') {
-                currentToken = new Token(Type.MOVE_RIGHT_OR_LEFT, null);
-                return currentToken;
+                return new Token(Type.MOVE_RIGHT_OR_LEFT, null);
             }
 
             if (currentChar == '|') {
-                currentToken = new Token(Type.MOVE_UP_OR_DOWN, null);
-                return currentToken;
+                return new Token(Type.MOVE_UP_OR_DOWN, null);
             }
 
             if (currentChar == '\n') {
-                program.next();
-                currentToken = new Token(Type.NEW_LINE, null);
-                return currentToken;
+                return new Token(Type.NEW_LINE, null);
             }
 
             if (currentChar == '.') {
-                program.next();
-                currentToken = new Token(Type.POP_AND_PRINT, null);
-                return currentToken;
+                return new Token(Type.POP_AND_PRINT, null);
             }
 
             if (currentChar == ':') {
-                program.next();
-                currentToken = new Token(Type.PEEK, null);
-                return currentToken;
+                return new Token(Type.PEEK, null);
             }
 
             if (isWhitespace(currentChar)) {
-                program.next();
-                currentToken = new Token(Type.WHITESPACE, null);
-                return currentToken;
+                return new Token(Type.WHITESPACE, null);
             }
             throw new IllegalStateException(format("No Token could be created for character {0}", currentChar));
         }
@@ -193,11 +163,28 @@ public class BefungeInterpreterTest {
             final var stringBuilder = new StringBuilder();
             final var stack = new Stack(100);
 
-            while (this.currentToken.type != Type.EOF) {
-                var currentToken = this.getNextToken();
+            var currentToken = DEFAULT_TOKEN;
+            while (currentToken.type != Type.EOF) {
+                currentToken = this.getNextToken();
 
                 if (currentToken.type == Type.INTEGER) {
                     stack.push(parseInt(currentToken.value));
+                }
+
+                if (currentToken.type == Type.MOVE_UP){
+                    program.setDirection(ProgramDirection.UP);
+                }
+
+                if (currentToken.type == Type.MOVE_DOWN){
+                    program.setDirection(ProgramDirection.DOWN);
+                }
+
+                if (currentToken.type == Type.MOVE_LEFT) {
+                    program.setDirection(ProgramDirection.LEFT);
+                }
+
+                if (currentToken.type == Type.MOVE_RIGHT){
+                    program.setDirection(ProgramDirection.RIGHT);
                 }
 
                 if (currentToken.type == Type.ADDITION) {
@@ -219,7 +206,6 @@ public class BefungeInterpreterTest {
                     } else {
                         program.setDirection(ProgramDirection.LEFT);
                     }
-                    program.next();
                 }
 
                 if (currentToken.type == Type.MOVE_UP_OR_DOWN) {
@@ -243,6 +229,8 @@ public class BefungeInterpreterTest {
                         stringBuilder.append(stack.pop());
                     }
                 }
+
+                program.next();
             }
 
             return stringBuilder.toString();
@@ -254,7 +242,10 @@ public class BefungeInterpreterTest {
         ADDITION,
         SUBSTRACTION,
         EOF,
-        MOVE,
+        MOVE_UP,
+        MOVE_DOWN,
+        MOVE_RIGHT,
+        MOVE_LEFT,
         WHITESPACE,
         NEW_LINE,
         MOVE_RIGHT_OR_LEFT,
