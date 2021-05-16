@@ -126,6 +126,14 @@ public class BefungeInterpreterTest {
                 return new Token(Type.SUBSTRACTION, null);
             }
 
+            if (currentChar == '*') {
+                return new Token(Type.MULTIPLICATION, null);
+            }
+
+            if (currentChar == '/') {
+                return new Token(Type.DIVISION, null);
+            }
+
             if (currentChar == 'v') {
                 return new Token(Type.MOVE_DOWN, null);
             }
@@ -168,6 +176,10 @@ public class BefungeInterpreterTest {
 
             if (currentChar == ':') {
                 return new Token(Type.PEEK, null);
+            }
+
+            if (currentChar == '#') {
+                return new Token(Type.TRAMPOLINE, null);
             }
 
             if (isWhitespace(currentChar)) {
@@ -230,6 +242,23 @@ public class BefungeInterpreterTest {
                     stack.push(b - a);
                 }
 
+                if (currentToken.type == Type.MULTIPLICATION) {
+                    var a = stack.pop();
+                    var b = stack.pop();
+                    stack.push(b * a);
+                }
+
+                if (currentToken.type == Type.DIVISION) {
+                    var a = stack.pop();
+                    var b = stack.pop();
+
+                    if (a == 0) {
+                        stack.push(0);
+                    } else {
+                        stack.push(b / a);
+                    }
+                }
+
                 if (currentToken.type == Type.MOVE_RIGHT_OR_LEFT) {
                     var a = stack.pop();
                     if (a == 0) {
@@ -261,7 +290,6 @@ public class BefungeInterpreterTest {
                     }
                 }
 
-
                 program.next();
             }
 
@@ -274,6 +302,8 @@ public class BefungeInterpreterTest {
         INTEGER,
         ADDITION,
         SUBSTRACTION,
+        MULTIPLICATION,
+        DIVISION,
         EOF,
         MOVE_UP,
         MOVE_DOWN,
@@ -286,6 +316,7 @@ public class BefungeInterpreterTest {
         POP_AND_PRINT,
         PEEK,
         STRING_MODE,
+        TRAMPOLINE,
     }
 
     private static class Token {
@@ -367,6 +398,17 @@ public class BefungeInterpreterTest {
     @Test
     void shouldInterpretSubtraction() {
         assertThat(interpret("32-.@")).isEqualTo("1");
+    }
+
+    @Test
+    void shouldInterpretMultiplication() {
+        assertThat(interpret("32*.@")).isEqualTo("6");
+    }
+
+    @Test
+    void shouldInterpretDivision() {
+        assertThat(interpret("82/.@")).isEqualTo("4");
+        assertThat(interpret("80/.@")).isEqualTo("0");
     }
 
     @Test
