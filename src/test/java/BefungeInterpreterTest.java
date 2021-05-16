@@ -3,10 +3,9 @@ import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
 import java.util.Comparator;
+import java.util.Random;
 
-import static java.lang.Character.isDigit;
-import static java.lang.Character.isWhitespace;
-import static java.lang.Integer.parseInt;
+import static java.lang.Character.*;
 import static java.text.MessageFormat.format;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -43,6 +42,10 @@ public class BefungeInterpreterTest {
         }
 
         private static Character[][] create(String code) {
+            if (!code.contains("@")) {
+                throw new IllegalStateException("No EOF available");
+            }
+
             var lines = code.split(SPLIT_BY);
 
             final var maxLineLength = Arrays.stream(lines)
@@ -87,6 +90,8 @@ public class BefungeInterpreterTest {
         private static final Token DEFAULT_TOKEN = new Token(Type.MOVE_RIGHT, null);
         private final Program program;
 
+        private boolean stringMode = false;
+
         private Interpreter(String code) {
             if (code.isBlank()) {
                 throw new IllegalArgumentException("Code should not be blank");
@@ -105,16 +110,20 @@ public class BefungeInterpreterTest {
                 return new Token(Type.EOF, null);
             }
 
+            if (isAlphabetic(currentChar) && currentChar != 'v') {
+                return new Token(Type.ALPHABETIC, (int) currentChar);
+            }
+
             if (isDigit(currentChar)) {
-                return new Token(Type.INTEGER, String.valueOf(currentChar));
+                return new Token(Type.INTEGER, getNumericValue(currentChar));
             }
 
             if (currentChar == '+') {
-                return new Token(Type.ADDITION, String.valueOf(currentChar));
+                return new Token(Type.ADDITION, null);
             }
 
             if (currentChar == '-') {
-                return new Token(Type.SUBSTRACTION, String.valueOf(currentChar));
+                return new Token(Type.SUBSTRACTION, null);
             }
 
             if (currentChar == 'v') {
@@ -131,6 +140,14 @@ public class BefungeInterpreterTest {
 
             if (currentChar == '>') {
                 return new Token(Type.MOVE_RIGHT, null);
+            }
+
+            if (currentChar == '?') {
+                return new Token(randomDir(), null);
+            }
+
+            if (currentChar == '"') {
+                return new Token(Type.STRING_MODE, null);
             }
 
             if (currentChar == '_') {
@@ -159,6 +176,12 @@ public class BefungeInterpreterTest {
             throw new IllegalStateException(format("No Token could be created for character {0}", currentChar));
         }
 
+        private Type randomDir() {
+            final var dirs = new Type[]{Type.MOVE_DOWN, Type.MOVE_LEFT, Type.MOVE_RIGHT, Type.MOVE_RIGHT};
+            final int pick = new Random().nextInt(dirs.length);
+            return dirs[pick];
+        }
+
         public String interpret() {
             final var stringBuilder = new StringBuilder();
             final var stack = new Stack(100);
@@ -167,15 +190,23 @@ public class BefungeInterpreterTest {
             while (currentToken.type != Type.EOF) {
                 currentToken = this.getNextToken();
 
-                if (currentToken.type == Type.INTEGER) {
-                    stack.push(parseInt(currentToken.value));
+                if (currentToken.type == Type.STRING_MODE) {
+                    this.stringMode = !this.stringMode;
                 }
 
-                if (currentToken.type == Type.MOVE_UP){
+                if (currentToken.type == Type.ALPHABETIC && this.stringMode) {
+                    stack.push(currentToken.value);
+                }
+
+                if (currentToken.type == Type.INTEGER) {
+                    stack.push(currentToken.value);
+                }
+
+                if (currentToken.type == Type.MOVE_UP) {
                     program.setDirection(ProgramDirection.UP);
                 }
 
-                if (currentToken.type == Type.MOVE_DOWN){
+                if (currentToken.type == Type.MOVE_DOWN) {
                     program.setDirection(ProgramDirection.DOWN);
                 }
 
@@ -183,7 +214,7 @@ public class BefungeInterpreterTest {
                     program.setDirection(ProgramDirection.LEFT);
                 }
 
-                if (currentToken.type == Type.MOVE_RIGHT){
+                if (currentToken.type == Type.MOVE_RIGHT) {
                     program.setDirection(ProgramDirection.RIGHT);
                 }
 
@@ -230,6 +261,7 @@ public class BefungeInterpreterTest {
                     }
                 }
 
+
                 program.next();
             }
 
@@ -238,6 +270,7 @@ public class BefungeInterpreterTest {
     }
 
     private enum Type {
+        ALPHABETIC,
         INTEGER,
         ADDITION,
         SUBSTRACTION,
@@ -252,13 +285,14 @@ public class BefungeInterpreterTest {
         MOVE_UP_OR_DOWN,
         POP_AND_PRINT,
         PEEK,
+        STRING_MODE,
     }
 
     private static class Token {
         private final Type type;
-        private final String value;
+        private final Integer value;
 
-        public Token(Type type, String value) {
+        public Token(Type type, Integer value) {
             this.type = type;
             this.value = value;
         }
@@ -310,7 +344,7 @@ public class BefungeInterpreterTest {
     }
 
     @Test
-    @DisplayName("It should throw an excpetion if the code does not contain '@' as EOF key")
+    @DisplayName("It should throw an exception if the code does not contain '@' as EOF key")
     void shouldThrowExceptionForCodeWithoutEOF() {
         assertThatThrownBy(() -> interpret("ffds")).isInstanceOf(IllegalStateException.class);
     }
@@ -358,5 +392,10 @@ public class BefungeInterpreterTest {
     @Test
     void shouldInterpretBefungee() {
         assertThat(interpret(">987v>.v\nv456<  :\n>321 ^ _@")).isEqualTo("123456789");
+    }
+
+    @Test
+    void shouldInterpretAlphabetics() {
+        assertThat(interpret("\"hallo\".@")).isEqualTo("11110810897104");
     }
 }
