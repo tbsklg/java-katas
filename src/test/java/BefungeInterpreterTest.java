@@ -5,9 +5,10 @@ import java.util.Arrays;
 import java.util.Comparator;
 import java.util.Random;
 
-import static java.lang.Character.*;
+import static java.lang.Character.getNumericValue;
+import static java.lang.Character.isDigit;
+import static java.lang.Character.isWhitespace;
 import static java.text.MessageFormat.format;
-import static org.assertj.core.api.Assertions.*;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
@@ -91,7 +92,7 @@ public class BefungeInterpreterTest {
         private static final Token DEFAULT_TOKEN = new Token(Type.MOVE_RIGHT, null);
         private final Program program;
 
-        private boolean stringMode = false;
+        private boolean isStringMode = false;
 
         private Interpreter(String code) {
             if (code.isBlank()) {
@@ -107,12 +108,17 @@ public class BefungeInterpreterTest {
         public Token getNextToken() {
             var currentChar = program.currentChar();
 
-            if (currentChar == '@') {
-                return new Token(Type.EOF, null);
+            if (currentChar == '"') {
+                this.isStringMode = !this.isStringMode;
+                return new Token(Type.STRING_MODE, null);
             }
 
-            if (isAlphabetic(currentChar) && currentChar != 'v') {
-                return new Token(Type.ALPHABETIC, (int) currentChar);
+            if (this.isStringMode) {
+                return new Token(Type.ASCII, (int) currentChar);
+            }
+
+            if (currentChar == '@') {
+                return new Token(Type.EOF, null);
             }
 
             if (isDigit(currentChar)) {
@@ -163,10 +169,6 @@ public class BefungeInterpreterTest {
                 return new Token(randomDir(), null);
             }
 
-            if (currentChar == '"') {
-                return new Token(Type.STRING_MODE, null);
-            }
-
             if (currentChar == '_') {
                 return new Token(Type.MOVE_RIGHT_OR_LEFT, null);
             }
@@ -180,11 +182,15 @@ public class BefungeInterpreterTest {
             }
 
             if (currentChar == '.') {
-                return new Token(Type.POP_AND_PRINT, null);
+                return new Token(Type.POP_AND_PRINT_AS_INT, null);
+            }
+
+            if (currentChar == ',') {
+                return new Token(Type.POP_AND_PRINT_AS_ASCII, null);
             }
 
             if (currentChar == ':') {
-                return new Token(Type.PEEK, null);
+                return new Token(Type.DUPLICATE, null);
             }
 
             if (currentChar == '#') {
@@ -215,11 +221,7 @@ public class BefungeInterpreterTest {
             while (currentToken.type != Type.EOF) {
                 currentToken = this.getNextToken();
 
-                if (currentToken.type == Type.STRING_MODE) {
-                    this.stringMode = !this.stringMode;
-                }
-
-                if (currentToken.type == Type.ALPHABETIC && this.stringMode) {
+                if (currentToken.type == Type.ASCII) {
                     stack.push(currentToken.value);
                 }
 
@@ -301,16 +303,24 @@ public class BefungeInterpreterTest {
                     }
                 }
 
-                if (currentToken.type == Type.PEEK) {
+                if (currentToken.type == Type.DUPLICATE) {
                     var a = stack.peek();
                     if (a == 0) {
                         stack.push(a);
+                    } else {
+                        stack.push(a * 2);
                     }
                 }
 
-                if (currentToken.type == Type.POP_AND_PRINT) {
+                if (currentToken.type == Type.POP_AND_PRINT_AS_INT) {
                     while (!stack.isEmpty()) {
                         stringBuilder.append(stack.pop());
+                    }
+                }
+
+                if (currentToken.type == Type.POP_AND_PRINT_AS_ASCII) {
+                    while (!stack.isEmpty()) {
+                        stringBuilder.append((char) stack.pop());
                     }
                 }
 
@@ -342,7 +352,7 @@ public class BefungeInterpreterTest {
     }
 
     private enum Type {
-        ALPHABETIC,
+        ASCII,
         BACKTICK,
         INTEGER,
         ADDITION,
@@ -360,8 +370,9 @@ public class BefungeInterpreterTest {
         NEW_LINE,
         MOVE_RIGHT_OR_LEFT,
         MOVE_UP_OR_DOWN,
-        POP_AND_PRINT,
-        PEEK,
+        POP_AND_PRINT_AS_INT,
+        POP_AND_PRINT_AS_ASCII,
+        DUPLICATE,
         STRING_MODE,
         TRAMPOLINE,
     }
@@ -497,12 +508,17 @@ public class BefungeInterpreterTest {
     }
 
     @Test
+    void shouldInterpretAlphabetics() {
+        assertThat(interpret("\"hallo\".@")).isEqualTo("11110810897104");
+    }
+
+    @Test
     void shouldInterpretBefungee() {
         assertThat(interpret(">987v>.v\nv456<  :\n>321 ^ _@")).isEqualTo("123456789");
     }
 
     @Test
-    void shouldInterpretAlphabetics() {
-        assertThat(interpret("\"hallo\".@")).isEqualTo("11110810897104");
+    void shouldInterpretHelloWorld() {
+        assertThat(interpret(">25*\"!dlroW olleH\":v\n                v:,_@\n                >  ^")).isEqualTo("Hello World!\n");
     }
 }
