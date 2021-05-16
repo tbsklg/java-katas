@@ -7,6 +7,7 @@ import java.util.Random;
 
 import static java.lang.Character.*;
 import static java.text.MessageFormat.format;
+import static org.assertj.core.api.Assertions.*;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
@@ -190,6 +191,10 @@ public class BefungeInterpreterTest {
                 return new Token(Type.TRAMPOLINE, null);
             }
 
+            if (currentChar == '`') {
+                return new Token(Type.BACKTICK, null);
+            }
+
             if (isWhitespace(currentChar)) {
                 return new Token(Type.WHITESPACE, null);
             }
@@ -318,6 +323,17 @@ public class BefungeInterpreterTest {
                     }
                 }
 
+                if (currentToken.type == Type.BACKTICK) {
+                    var a = stack.pop();
+                    var b = stack.pop();
+
+                    if (b > a) {
+                        stack.push(1);
+                    } else {
+                        stack.push(0);
+                    }
+                }
+
                 program.next();
             }
 
@@ -327,6 +343,7 @@ public class BefungeInterpreterTest {
 
     private enum Type {
         ALPHABETIC,
+        BACKTICK,
         INTEGER,
         ADDITION,
         SUBSTRACTION,
@@ -439,6 +456,12 @@ public class BefungeInterpreterTest {
     @Test
     void shouldInterpretMultiplication() {
         assertThat(interpret("32*.@")).isEqualTo("6");
+    }
+
+    @Test
+    void shouldInterpretBackTick() {
+        assertThat(interpret("45`.@")).isEqualTo("0");
+        assertThat(interpret("43`.@")).isEqualTo("1");
     }
 
     @Test
