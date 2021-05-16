@@ -130,6 +130,10 @@ public class BefungeInterpreterTest {
                 return new Token(Type.MULTIPLICATION, null);
             }
 
+            if (currentChar == '!') {
+                return new Token(Type.LOGICAL_NOT, null);
+            }
+
             if (currentChar == '/') {
                 return new Token(Type.DIVISION, null);
             }
@@ -305,6 +309,15 @@ public class BefungeInterpreterTest {
                     }
                 }
 
+                if (currentToken.type == Type.LOGICAL_NOT) {
+                    var a = stack.pop();
+                    if (a == 0) {
+                        stack.push(1);
+                    } else {
+                        stack.push(0);
+                    }
+                }
+
                 program.next();
             }
 
@@ -319,6 +332,7 @@ public class BefungeInterpreterTest {
         SUBSTRACTION,
         MULTIPLICATION,
         DIVISION,
+        LOGICAL_NOT,
         MODULO,
         EOF,
         MOVE_UP,
@@ -425,6 +439,12 @@ public class BefungeInterpreterTest {
     @Test
     void shouldInterpretMultiplication() {
         assertThat(interpret("32*.@")).isEqualTo("6");
+    }
+
+    @Test
+    void shouldInterpretLogicalNot() {
+        assertThat(interpret("320!.@")).isEqualTo("123");
+        assertThat(interpret("321!.@")).isEqualTo("023");
     }
 
     @Test
