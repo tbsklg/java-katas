@@ -150,6 +150,10 @@ public class BefungeInterpreterTest {
                 return new Token(Type.MOVE_RIGHT, null);
             }
 
+            if (currentChar == '%') {
+                return new Token(Type.MODULO, null);
+            }
+
             if (currentChar == '?') {
                 return new Token(randomDir(), null);
             }
@@ -259,6 +263,17 @@ public class BefungeInterpreterTest {
                     }
                 }
 
+                if (currentToken.type == Type.MODULO) {
+                    var a = stack.pop();
+                    var b = stack.pop();
+
+                    if (a == 0) {
+                        stack.push(0);
+                    } else {
+                        stack.push(b % a);
+                    }
+                }
+
                 if (currentToken.type == Type.MOVE_RIGHT_OR_LEFT) {
                     var a = stack.pop();
                     if (a == 0) {
@@ -304,6 +319,7 @@ public class BefungeInterpreterTest {
         SUBSTRACTION,
         MULTIPLICATION,
         DIVISION,
+        MODULO,
         EOF,
         MOVE_UP,
         MOVE_DOWN,
@@ -398,6 +414,12 @@ public class BefungeInterpreterTest {
     @Test
     void shouldInterpretSubtraction() {
         assertThat(interpret("32-.@")).isEqualTo("1");
+    }
+
+    @Test
+    void shouldInterpretModulo() {
+        assertThat(interpret("32%.@")).isEqualTo("1");
+        assertThat(interpret("30%.@")).isEqualTo("0");
     }
 
     @Test
