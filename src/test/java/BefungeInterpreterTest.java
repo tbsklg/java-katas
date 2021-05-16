@@ -1,6 +1,11 @@
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.Arrays;
+import java.util.Comparator;
+
+import static java.lang.Character.isDigit;
+import static java.lang.Character.isWhitespace;
 import static java.lang.Integer.parseInt;
 import static java.text.MessageFormat.format;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -9,56 +14,185 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 public class BefungeInterpreterTest {
 
     private String interpret(String code) {
-        return new Interpreter(code).interpret();
+        return Interpreter.fromCode(code).interpret();
+    }
+
+    private enum ProgramDirection {
+        UP,
+        DOWN,
+        LEFT,
+        RIGHT,
+    }
+
+    private static class Program {
+
+        private static final String SPLIT_BY = "\\n";
+
+        private final Character[][] code;
+        private int row = 0;
+        private int column = 0;
+
+        private ProgramDirection dir = ProgramDirection.RIGHT;
+
+        private Program(String code) {
+            this.code = create(code);
+        }
+
+        public static Program from(String code) {
+            return new Program(code);
+        }
+
+        private static Character[][] create(String code) {
+            var lines = code.split(SPLIT_BY);
+
+            final var maxLineLength = Arrays.stream(lines)
+                    .map(String::length)
+                    .max(Comparator.naturalOrder())
+                    .orElse(0);
+
+            var program = new Character[lines.length][maxLineLength];
+
+            for (int i = 0; i < lines.length; i++) {
+                final var chars = lines[i].toCharArray();
+                for (int j = 0; j < chars.length; j++) {
+                    program[i][j] = chars[j];
+                }
+            }
+
+            return program;
+        }
+
+        public void setDirection(ProgramDirection dir) {
+            this.dir = dir;
+        }
+
+        public Character currentChar() {
+            return code[row][column];
+        }
+
+        public void next() {
+            if (this.dir == ProgramDirection.DOWN) {
+                row++;
+            } else if (dir == ProgramDirection.UP) {
+                row--;
+            } else if (dir == ProgramDirection.LEFT) {
+                column--;
+            } else {
+                column++;
+            }
+        }
     }
 
     private static class Interpreter {
+        private Token currentToken = new Token(Type.MOVE, ">");
+        private final Program program;
 
-        private final String code;
-
-        private int position = 0;
-        private Token currentToken = new Token(Type.MOVE_RIGHT, ">");
-
-        public Interpreter(String code) {
+        private Interpreter(String code) {
             if (code.isBlank()) {
                 throw new IllegalArgumentException("Code should not be blank");
             }
+            this.program = Program.from(code);
+        }
 
-            this.code = code;
+        public static Interpreter fromCode(String code) {
+            return new Interpreter(code);
         }
 
         public Token getNextToken() {
-            var currentChar = code.charAt(position);
+            var currentChar = program.currentChar();
 
             if (currentChar == '@') {
-                position++;
-                currentToken = new Token(Type.EOF, String.valueOf(currentChar));
+                program.next();
+                currentToken = new Token(Type.EOF, null);
                 return currentToken;
             }
 
-            if (Character.isDigit(currentChar)) {
-                position++;
+            if (isDigit(currentChar)) {
+                program.next();
                 currentToken = new Token(Type.INTEGER, String.valueOf(currentChar));
                 return currentToken;
             }
 
             if (currentChar == '+') {
-                position++;
+                program.next();
                 currentToken = new Token(Type.ADDITION, String.valueOf(currentChar));
                 return currentToken;
             }
 
             if (currentChar == '-') {
-                position++;
+                program.next();
                 currentToken = new Token(Type.SUBSTRACTION, String.valueOf(currentChar));
                 return currentToken;
             }
 
+            if (currentChar == 'v') {
+                program.setDirection(ProgramDirection.DOWN);
+                program.next();
+                currentToken = new Token(Type.MOVE, null);
+                return currentToken;
+            }
+
+            if (currentChar == '<') {
+                program.setDirection(ProgramDirection.LEFT);
+                program.next();
+                currentToken = new Token(Type.MOVE, null);
+                return currentToken;
+            }
+
+            if (currentChar == '^') {
+                program.setDirection(ProgramDirection.UP);
+                program.next();
+                currentToken = new Token(Type.MOVE, null);
+                return currentToken;
+            }
+
+            if (currentChar == '>') {
+                program.setDirection(ProgramDirection.RIGHT);
+                program.next();
+                currentToken = new Token(Type.MOVE, null);
+                return currentToken;
+            }
+
+            if (currentChar == '_') {
+                currentToken = new Token(Type.MOVE_RIGHT_OR_LEFT, null);
+                return currentToken;
+            }
+
+            if (currentChar == '|') {
+                currentToken = new Token(Type.MOVE_UP_OR_DOWN, null);
+                return currentToken;
+            }
+
+            if (currentChar == '\n') {
+                program.next();
+                currentToken = new Token(Type.NEW_LINE, null);
+                return currentToken;
+            }
+
+            if (currentChar == '.') {
+                program.next();
+                currentToken = new Token(Type.POP_AND_PRINT, null);
+                return currentToken;
+            }
+
+            if (currentChar == ':') {
+                program.next();
+                currentToken = new Token(Type.PEEK, null);
+                return currentToken;
+            }
+
+            if (isWhitespace(currentChar)) {
+                program.next();
+                currentToken = new Token(Type.WHITESPACE, null);
+                return currentToken;
+            }
             throw new IllegalStateException(format("No Token could be created for character {0}", currentChar));
         }
 
         public String interpret() {
-            var stack = new Stack(100);
+            final var stringBuilder = new StringBuilder();
+            final var stack = new Stack(100);
+
             while (this.currentToken.type != Type.EOF) {
                 var currentToken = this.getNextToken();
 
@@ -77,13 +211,38 @@ public class BefungeInterpreterTest {
                     var b = stack.pop();
                     stack.push(b - a);
                 }
-            }
 
-            final var stringBuilder = new StringBuilder();
-            var counter = stack.size() - 1;
+                if (currentToken.type == Type.MOVE_RIGHT_OR_LEFT) {
+                    var a = stack.pop();
+                    if (a == 0) {
+                        program.setDirection(ProgramDirection.RIGHT);
+                    } else {
+                        program.setDirection(ProgramDirection.LEFT);
+                    }
+                    program.next();
+                }
 
-            for (int i = counter; i >= 0; i--) {
-                stringBuilder.append(stack.pop());
+                if (currentToken.type == Type.MOVE_UP_OR_DOWN) {
+                    var a = stack.pop();
+                    if (a == 0) {
+                        program.setDirection(ProgramDirection.UP);
+                    } else {
+                        program.setDirection(ProgramDirection.DOWN);
+                    }
+                }
+
+                if (currentToken.type == Type.PEEK) {
+                    var a = stack.peek();
+                    if (a == 0) {
+                        stack.push(a);
+                    }
+                }
+
+                if (currentToken.type == Type.POP_AND_PRINT) {
+                    while (!stack.isEmpty()) {
+                        stringBuilder.append(stack.pop());
+                    }
+                }
             }
 
             return stringBuilder.toString();
@@ -95,7 +254,13 @@ public class BefungeInterpreterTest {
         ADDITION,
         SUBSTRACTION,
         EOF,
-        MOVE_RIGHT,
+        MOVE,
+        WHITESPACE,
+        NEW_LINE,
+        MOVE_RIGHT_OR_LEFT,
+        MOVE_UP_OR_DOWN,
+        POP_AND_PRINT,
+        PEEK,
     }
 
     private static class Token {
@@ -135,15 +300,18 @@ public class BefungeInterpreterTest {
             return item;
         }
 
+        public int peek() {
+            if (N == 0) {
+                return 0;
+            }
+
+            return s[N - 1];
+        }
+
         public boolean isEmpty() {
             return N == 0;
         }
-
-        public int size() {
-            return N;
-        }
     }
-
 
     @Test
     void shouldThrowExceptionForEmptyString() {
@@ -158,16 +326,46 @@ public class BefungeInterpreterTest {
 
     @Test
     void shouldInterpretNumerics() {
-        assertThat(interpret("321@")).isEqualTo("123");
+        assertThat(interpret("321.@")).isEqualTo("123");
+    }
+
+    @Test
+    void shouldSkipWhitespaces() {
+        assertThat(interpret("321     .@")).isEqualTo("123");
     }
 
     @Test
     void shouldInterpretAddition() {
-        assertThat(interpret("321+@")).isEqualTo("33");
+        assertThat(interpret("321+.@")).isEqualTo("33");
     }
 
     @Test
     void shouldInterpretSubtraction() {
-        assertThat(interpret("32-@")).isEqualTo("1");
+        assertThat(interpret("32-.@")).isEqualTo("1");
+    }
+
+    @Test
+    void shouldMoveDown() {
+        assertThat(interpret("321v\n   .\n   @")).isEqualTo("123");
+    }
+
+    @Test
+    void shouldMoveLeft() {
+        assertThat(interpret("654v\nv.3<\n@")).isEqualTo("3456");
+    }
+
+    @Test
+    void shouldMoveRight() {
+        assertThat(interpret("654v\nv23<\n>87.@")).isEqualTo("7823456");
+    }
+
+    @Test
+    void shouldMoveUp() {
+        assertThat(interpret("654v@\nv23<.\n>876^")).isEqualTo("67823456");
+    }
+
+    @Test
+    void shouldInterpretBefungee() {
+        assertThat(interpret(">987v>.v\nv456<  :\n>321 ^ _@")).isEqualTo("123456789");
     }
 }
