@@ -5,9 +5,7 @@ import java.util.Arrays;
 import java.util.Comparator;
 import java.util.Random;
 
-import static java.lang.Character.getNumericValue;
-import static java.lang.Character.isDigit;
-import static java.lang.Character.isWhitespace;
+import static java.lang.Character.*;
 import static java.text.MessageFormat.format;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -201,6 +199,14 @@ public class BefungeInterpreterTest {
                 return new Token(Type.BACKTICK, null);
             }
 
+            if (currentChar == '\\') {
+                return new Token(Type.SWAP, null);
+            }
+
+            if (currentChar == '$') {
+                return new Token(Type.DISCARD, null);
+            }
+
             if (isWhitespace(currentChar)) {
                 return new Token(Type.WHITESPACE, null);
             }
@@ -215,7 +221,7 @@ public class BefungeInterpreterTest {
 
         public String interpret() {
             final var stringBuilder = new StringBuilder();
-            final var stack = new Stack(100);
+            final var stack = new Stack(1000);
 
             var currentToken = DEFAULT_TOKEN;
             while (currentToken.type != Type.EOF) {
@@ -304,11 +310,12 @@ public class BefungeInterpreterTest {
                 }
 
                 if (currentToken.type == Type.DUPLICATE) {
-                    var a = stack.peek();
-                    if (a == 0) {
-                        stack.push(a);
+                    if (stack.isEmpty()) {
+                        stack.push(0);
                     } else {
-                        stack.push(a * 2);
+                        var a = stack.pop();
+                        stack.push(a);
+                        stack.push(a);
                     }
                 }
 
@@ -344,6 +351,18 @@ public class BefungeInterpreterTest {
                     }
                 }
 
+                if (currentToken.type == Type.SWAP) {
+                    var a = stack.pop();
+                    var b = stack.pop();
+
+                    stack.push(a);
+                    stack.push(b);
+                }
+
+                if (currentToken.type == Type.DISCARD) {
+                    stack.pop();
+                }
+
                 program.next();
             }
 
@@ -375,6 +394,8 @@ public class BefungeInterpreterTest {
         DUPLICATE,
         STRING_MODE,
         TRAMPOLINE,
+        SWAP,
+        DISCARD,
     }
 
     private static class Token {
@@ -409,6 +430,10 @@ public class BefungeInterpreterTest {
         }
 
         public int pop() {
+            if (this.isEmpty()) {
+                return 0;
+            }
+
             var item = s[--N];
             s[N] = null;
             return item;
@@ -456,6 +481,7 @@ public class BefungeInterpreterTest {
     @Test
     void shouldInterpretSubtraction() {
         assertThat(interpret("32-.@")).isEqualTo("1");
+        assertThat(interpret("2-.@")).isEqualTo("-2");
     }
 
     @Test
@@ -520,5 +546,11 @@ public class BefungeInterpreterTest {
     @Test
     void shouldInterpretHelloWorld() {
         assertThat(interpret(">25*\"!dlroW olleH\":v\n                v:,_@\n                >  ^")).isEqualTo("Hello World!\n");
+    }
+
+    @Test
+    void shouldInterpretFactorial() {
+        assertThat(interpret("08>:1-:v v *_$.@ \n" +
+                                   "  ^    _$>\\:^  ^    _$>\\:^")).isEqualTo("40320");
     }
 }
