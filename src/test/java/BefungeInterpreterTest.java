@@ -7,6 +7,7 @@ import java.util.Random;
 
 import static java.lang.Character.*;
 import static java.text.MessageFormat.format;
+import static org.assertj.core.api.Assertions.*;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
@@ -71,6 +72,10 @@ public class BefungeInterpreterTest {
 
         public Character currentChar() {
             return code[row][column];
+        }
+
+        public int getCodeAt(int y, int x) {
+            return code[y][x];
         }
 
         public void next() {
@@ -207,6 +212,10 @@ public class BefungeInterpreterTest {
                 return new Token(Type.DISCARD, null);
             }
 
+            if (currentChar == 'g') {
+                return new Token(Type.QUINE, null);
+            }
+
             if (isWhitespace(currentChar)) {
                 return new Token(Type.WHITESPACE, null);
             }
@@ -214,14 +223,14 @@ public class BefungeInterpreterTest {
         }
 
         private Type randomDir() {
-            final var dirs = new Type[]{Type.MOVE_DOWN, Type.MOVE_LEFT, Type.MOVE_RIGHT, Type.MOVE_RIGHT};
+            final var dirs = new Type[]{Type.MOVE_DOWN, Type.MOVE_UP, Type.MOVE_LEFT, Type.MOVE_RIGHT};
             final int pick = new Random().nextInt(dirs.length);
             return dirs[pick];
         }
 
         public String interpret() {
             final var stringBuilder = new StringBuilder();
-            final var stack = new Stack(1000);
+            final var stack = new Stack(50);
 
             var currentToken = DEFAULT_TOKEN;
             while (currentToken.type != Type.EOF) {
@@ -326,9 +335,7 @@ public class BefungeInterpreterTest {
                 }
 
                 if (currentToken.type == Type.POP_AND_PRINT_AS_ASCII) {
-                    while (!stack.isEmpty()) {
-                        stringBuilder.append((char) stack.pop());
-                    }
+                    stringBuilder.append((char) stack.pop());
                 }
 
                 if (currentToken.type == Type.LOGICAL_NOT) {
@@ -361,6 +368,16 @@ public class BefungeInterpreterTest {
 
                 if (currentToken.type == Type.DISCARD) {
                     stack.pop();
+                }
+
+                if (currentToken.type == Type.QUINE) {
+                    var y = stack.pop();
+                    var x = stack.pop();
+                    stack.push(program.getCodeAt(y, x));
+                }
+
+                if (currentToken.type == Type.TRAMPOLINE) {
+                    program.next();
                 }
 
                 program.next();
@@ -396,6 +413,7 @@ public class BefungeInterpreterTest {
         TRAMPOLINE,
         SWAP,
         DISCARD,
+        QUINE,
     }
 
     private static class Token {
@@ -551,6 +569,11 @@ public class BefungeInterpreterTest {
     @Test
     void shouldInterpretFactorial() {
         assertThat(interpret("08>:1-:v v *_$.@ \n" +
-                                   "  ^    _$>\\:^  ^    _$>\\:^")).isEqualTo("40320");
+                "  ^    _$>\\:^  ^    _$>\\:^")).isEqualTo("40320");
+    }
+
+    @Test
+    void shouldInterpretQuine() {
+        assertThat(interpret("01->1# +# :# 0# g# ,# :# 5# 8# *# 4# +# -# _@")).isEqualTo("01->1# +# :# 0# g# ,# :# 5# 8# *# 4# +# -# _@");
     }
 }
