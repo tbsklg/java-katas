@@ -9,7 +9,6 @@ import static java.lang.Character.*;
 import static java.text.MessageFormat.format;
 
 public class Interpreter {
-    private static final Token DEFAULT_TOKEN = Token.ofType(MOVE_RIGHT);
     private final Program program;
 
     private boolean isStringMode = false;
