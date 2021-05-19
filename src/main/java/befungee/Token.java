@@ -16,12 +16,14 @@ public class Token {
         this.value = null;
     }
 
-    public static Token ofType(InterpreterType type) {
-        return new Token(type);
+    public Token andValue(Integer value) {
+        assert type != null;
+
+        return new Token(this.type, value);
     }
 
-    public static Token withTypeAndValue(InterpreterType type, Integer value) {
-        return new Token(type, value);
+    public static Token ofType(InterpreterType type) {
+        return new Token(type);
     }
 
     @Override

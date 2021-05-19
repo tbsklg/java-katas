@@ -31,7 +31,7 @@ public class Interpreter {
         }
 
         if (this.isStringMode) {
-            return Token.withTypeAndValue(ASCII, (int) currentChar);
+            return Token.ofType(ASCII).andValue((int) currentChar);
         }
 
         if (currentChar == '@') {
@@ -39,7 +39,7 @@ public class Interpreter {
         }
 
         if (isDigit(currentChar)) {
-            return Token.withTypeAndValue(INTEGER, getNumericValue(currentChar));
+            return Token.ofType(INTEGER).andValue(getNumericValue(currentChar));
         }
 
         if (currentChar == '+') {
