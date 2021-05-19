@@ -7,7 +7,6 @@ import java.util.Random;
 
 import static java.lang.Character.*;
 import static java.text.MessageFormat.format;
-import static org.assertj.core.api.Assertions.*;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
@@ -43,10 +42,6 @@ public class BefungeInterpreterTest {
         }
 
         private static Character[][] create(String code) {
-            if (!code.contains("@")) {
-                throw new IllegalStateException("No EOF available");
-            }
-
             var lines = code.split(SPLIT_BY);
 
             final var maxLineLength = Arrays.stream(lines)
@@ -89,6 +84,10 @@ public class BefungeInterpreterTest {
                 column++;
             }
         }
+
+        public void change(int x, int y, int v) {
+            code[y][x] = (char) v;
+        }
     }
 
     private static class Interpreter {
@@ -98,9 +97,6 @@ public class BefungeInterpreterTest {
         private boolean isStringMode = false;
 
         private Interpreter(String code) {
-            if (code.isBlank()) {
-                throw new IllegalArgumentException("Code should not be blank");
-            }
             this.program = Program.from(code);
         }
 
@@ -213,7 +209,11 @@ public class BefungeInterpreterTest {
             }
 
             if (currentChar == 'g') {
-                return new Token(Type.QUINE, null);
+                return new Token(Type.GET, null);
+            }
+
+            if (currentChar == 'p') {
+                return new Token(Type.PUT, null);
             }
 
             if (isWhitespace(currentChar)) {
@@ -230,7 +230,7 @@ public class BefungeInterpreterTest {
 
         public String interpret() {
             final var stringBuilder = new StringBuilder();
-            final var stack = new Stack(50);
+            final var stack = new Stack(100);
 
             var currentToken = DEFAULT_TOKEN;
             while (currentToken.type != Type.EOF) {
@@ -312,9 +312,9 @@ public class BefungeInterpreterTest {
                 if (currentToken.type == Type.MOVE_UP_OR_DOWN) {
                     var a = stack.pop();
                     if (a == 0) {
-                        program.setDirection(ProgramDirection.UP);
-                    } else {
                         program.setDirection(ProgramDirection.DOWN);
+                    } else {
+                        program.setDirection(ProgramDirection.UP);
                     }
                 }
 
@@ -329,9 +329,7 @@ public class BefungeInterpreterTest {
                 }
 
                 if (currentToken.type == Type.POP_AND_PRINT_AS_INT) {
-                    while (!stack.isEmpty()) {
-                        stringBuilder.append(stack.pop());
-                    }
+                    stringBuilder.append(stack.pop());
                 }
 
                 if (currentToken.type == Type.POP_AND_PRINT_AS_ASCII) {
@@ -370,10 +368,18 @@ public class BefungeInterpreterTest {
                     stack.pop();
                 }
 
-                if (currentToken.type == Type.QUINE) {
+                if (currentToken.type == Type.GET) {
                     var y = stack.pop();
                     var x = stack.pop();
                     stack.push(program.getCodeAt(y, x));
+                }
+
+                if (currentToken.type == Type.PUT) {
+                    var y = stack.pop();
+                    var x = stack.pop();
+                    var v = stack.pop();
+
+                    program.change(x, y, v);
                 }
 
                 if (currentToken.type == Type.TRAMPOLINE) {
@@ -413,7 +419,8 @@ public class BefungeInterpreterTest {
         TRAMPOLINE,
         SWAP,
         DISCARD,
-        QUINE,
+        GET,
+        PUT,
     }
 
     private static class Token {
@@ -483,17 +490,7 @@ public class BefungeInterpreterTest {
 
     @Test
     void shouldInterpretNumerics() {
-        assertThat(interpret("321.@")).isEqualTo("123");
-    }
-
-    @Test
-    void shouldSkipWhitespaces() {
-        assertThat(interpret("321     .@")).isEqualTo("123");
-    }
-
-    @Test
-    void shouldInterpretAddition() {
-        assertThat(interpret("321+.@")).isEqualTo("33");
+        assertThat(interpret("321.@")).isEqualTo("1");
     }
 
     @Test
@@ -521,39 +518,14 @@ public class BefungeInterpreterTest {
 
     @Test
     void shouldInterpretLogicalNot() {
-        assertThat(interpret("320!.@")).isEqualTo("123");
-        assertThat(interpret("321!.@")).isEqualTo("023");
+        assertThat(interpret("320!.@")).isEqualTo("1");
+        assertThat(interpret("321!.@")).isEqualTo("0");
     }
 
     @Test
     void shouldInterpretDivision() {
         assertThat(interpret("82/.@")).isEqualTo("4");
         assertThat(interpret("80/.@")).isEqualTo("0");
-    }
-
-    @Test
-    void shouldMoveDown() {
-        assertThat(interpret("321v\n   .\n   @")).isEqualTo("123");
-    }
-
-    @Test
-    void shouldMoveLeft() {
-        assertThat(interpret("654v\nv.3<\n@")).isEqualTo("3456");
-    }
-
-    @Test
-    void shouldMoveRight() {
-        assertThat(interpret("654v\nv23<\n>87.@")).isEqualTo("7823456");
-    }
-
-    @Test
-    void shouldMoveUp() {
-        assertThat(interpret("654v@\nv23<.\n>876^")).isEqualTo("67823456");
-    }
-
-    @Test
-    void shouldInterpretAlphabetics() {
-        assertThat(interpret("\"hallo\".@")).isEqualTo("11110810897104");
     }
 
     @Test
@@ -575,5 +547,13 @@ public class BefungeInterpreterTest {
     @Test
     void shouldInterpretQuine() {
         assertThat(interpret("01->1# +# :# 0# g# ,# :# 5# 8# *# 4# +# -# _@")).isEqualTo("01->1# +# :# 0# g# ,# :# 5# 8# *# 4# +# -# _@");
+    }
+
+    @Test
+    void shouldInterpretSieve() {
+        assertThat(interpret("2>:3g\" \"-!v\\  g30          <\n" +
+                " |!`\"&\":+1_:.:03p>03g+:\"&\"`|\n" +
+                " @               ^  p3\\\" \":<\n" +
+                "2 2345678901234567890123456789012345678")).isEqualTo("23571113171923293137");
     }
 }
