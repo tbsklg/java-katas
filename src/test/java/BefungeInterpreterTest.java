@@ -12,11 +12,6 @@ public class BefungeInterpreterTest {
     }
 
     @Test
-    void shouldThrowExceptionForEmptyString() {
-        assertThatThrownBy(() -> interpret("")).isInstanceOf(IllegalArgumentException.class);
-    }
-
-    @Test
     @DisplayName("It should throw an exception if the code does not contain '@' as EOF key")
     void shouldThrowExceptionForCodeWithoutEOF() {
         assertThatThrownBy(() -> interpret("ffds")).isInstanceOf(IllegalStateException.class);
