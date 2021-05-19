@@ -9,7 +9,7 @@ import static java.lang.Character.*;
 import static java.text.MessageFormat.format;
 
 public class Interpreter {
-    private static final Token DEFAULT_TOKEN = new Token(MOVE_RIGHT, null);
+    private static final Token DEFAULT_TOKEN = Token.ofType(MOVE_RIGHT);
     private final Program program;
 
     private boolean isStringMode = false;
@@ -27,115 +27,115 @@ public class Interpreter {
 
         if (currentChar == '"') {
             this.isStringMode = !this.isStringMode;
-            return new Token(STRING_MODE, null);
+            return Token.ofType(STRING_MODE);
         }
 
         if (this.isStringMode) {
-            return new Token(ASCII, (int) currentChar);
+            return Token.withTypeAndValue(ASCII, (int) currentChar);
         }
 
         if (currentChar == '@') {
-            return new Token(EOF, null);
+            return Token.ofType(EOF);
         }
 
         if (isDigit(currentChar)) {
-            return new Token(INTEGER, getNumericValue(currentChar));
+            return Token.withTypeAndValue(INTEGER, getNumericValue(currentChar));
         }
 
         if (currentChar == '+') {
-            return new Token(ADDITION, null);
+            return Token.ofType(ADDITION);
         }
 
         if (currentChar == '-') {
-            return new Token(SUBSTRACTION, null);
+            return Token.ofType(SUBSTRACTION);
         }
 
         if (currentChar == '*') {
-            return new Token(MULTIPLICATION, null);
+            return Token.ofType(MULTIPLICATION);
         }
 
         if (currentChar == '!') {
-            return new Token(LOGICAL_NOT, null);
+            return Token.ofType(LOGICAL_NOT);
         }
 
         if (currentChar == '/') {
-            return new Token(DIVISION, null);
+            return Token.ofType(DIVISION);
         }
 
         if (currentChar == 'v') {
-            return new Token(MOVE_DOWN, null);
+            return Token.ofType(MOVE_DOWN);
         }
 
         if (currentChar == '<') {
-            return new Token(MOVE_LEFT, null);
+            return Token.ofType(MOVE_LEFT);
         }
 
         if (currentChar == '^') {
-            return new Token(MOVE_UP, null);
+            return Token.ofType(MOVE_UP);
         }
 
         if (currentChar == '>') {
-            return new Token(MOVE_RIGHT, null);
+            return Token.ofType(MOVE_RIGHT);
         }
 
         if (currentChar == '%') {
-            return new Token(MODULO, null);
+            return Token.ofType(MODULO);
         }
 
         if (currentChar == '?') {
-            return new Token(randomDir(), null);
+            return Token.ofType(randomDir());
         }
 
         if (currentChar == '_') {
-            return new Token(MOVE_RIGHT_OR_LEFT, null);
+            return Token.ofType(MOVE_RIGHT_OR_LEFT);
         }
 
         if (currentChar == '|') {
-            return new Token(MOVE_UP_OR_DOWN, null);
+            return Token.ofType(MOVE_UP_OR_DOWN);
         }
 
         if (currentChar == '\n') {
-            return new Token(NEW_LINE, null);
+            return Token.ofType(NEW_LINE);
         }
 
         if (currentChar == '.') {
-            return new Token(POP_AND_PRINT_AS_INT, null);
+            return Token.ofType(POP_AND_PRINT_AS_INT);
         }
 
         if (currentChar == ',') {
-            return new Token(POP_AND_PRINT_AS_ASCII, null);
+            return Token.ofType(POP_AND_PRINT_AS_ASCII);
         }
 
         if (currentChar == ':') {
-            return new Token(DUPLICATE, null);
+            return Token.ofType(DUPLICATE);
         }
 
         if (currentChar == '#') {
-            return new Token(TRAMPOLINE, null);
+            return Token.ofType(TRAMPOLINE);
         }
 
         if (currentChar == '`') {
-            return new Token(BACKTICK, null);
+            return Token.ofType(BACKTICK);
         }
 
         if (currentChar == '\\') {
-            return new Token(SWAP, null);
+            return Token.ofType(SWAP);
         }
 
         if (currentChar == '$') {
-            return new Token(DISCARD, null);
+            return Token.ofType(DISCARD);
         }
 
         if (currentChar == 'g') {
-            return new Token(GET, null);
+            return Token.ofType(GET);
         }
 
         if (currentChar == 'p') {
-            return new Token(PUT, null);
+            return Token.ofType(PUT);
         }
 
         if (isWhitespace(currentChar)) {
-            return new Token(WHITESPACE, null);
+            return Token.ofType(WHITESPACE);
         }
         throw new IllegalStateException(format("No Token could be created for character {0}", currentChar));
     }

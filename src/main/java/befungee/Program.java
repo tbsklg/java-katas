@@ -7,7 +7,7 @@ import static befungee.ProgramDirection.RIGHT;
 
 public class Program {
 
-    private static final String SPLIT_BY = "\\n";
+    private static final String BY_NEW_LINE = "\\n";
 
     private final Character[][] code;
     private int row = 0;
@@ -24,7 +24,7 @@ public class Program {
     }
 
     private static Character[][] create(String code) {
-        var lines = code.split(SPLIT_BY);
+        var lines = code.split(BY_NEW_LINE);
 
         final var maxLineLength = Arrays.stream(lines)
                 .map(String::length)
