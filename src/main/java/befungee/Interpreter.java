@@ -22,9 +22,7 @@ public class Interpreter {
         return new Interpreter(code);
     }
 
-    public Token getNextToken() {
-        var currentChar = program.currentChar();
-
+    public Token tokenFrom(Character currentChar) {
         if (currentChar == '"') {
             this.isStringMode = !this.isStringMode;
             return Token.ofType(STRING_MODE);
@@ -142,7 +140,7 @@ public class Interpreter {
 
     private InterpreterType randomDir() {
         final var dirs = new InterpreterType[]{MOVE_DOWN, MOVE_UP, MOVE_LEFT, MOVE_RIGHT};
-        final int pick = new Random().nextInt(dirs.length);
+        final var pick = new Random().nextInt(dirs.length);
         return dirs[pick];
     }
 
@@ -150,9 +148,8 @@ public class Interpreter {
         final var stringBuilder = new StringBuilder();
         final var stack = new Stack(100);
 
-        var currentToken = DEFAULT_TOKEN;
-        while (currentToken.type != EOF) {
-            currentToken = this.getNextToken();
+        while (true) {
+            final var currentToken = this.tokenFrom(program.currentChar());
 
             if (currentToken.type == ASCII) {
                 stack.push(currentToken.value);
@@ -302,6 +299,10 @@ public class Interpreter {
 
             if (currentToken.type == TRAMPOLINE) {
                 program.next();
+            }
+
+            if (currentToken.type == EOF) {
+                break;
             }
 
             program.next();
