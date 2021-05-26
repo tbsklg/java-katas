@@ -1,7 +1,9 @@
 import org.junit.jupiter.api.Test;
 
+import java.text.MessageFormat;
 import java.util.function.IntBinaryOperator;
 
+import static java.text.MessageFormat.*;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
@@ -48,19 +50,14 @@ public class FindTheUnknownDigitTest {
     final var right = bla[1];
 
     final var operators = left.split("(?=[+-][0-9?])(?<=[0-9?])");
-
     final var operator = operators[1].charAt(0);
 
     final var isMissingInFirstOperator = operators[0].contains("?");
     if (isMissingInFirstOperator) {
-      final var op2 = Integer.valueOf(operators[1].substring(1));
-      final var result = Integer.valueOf(right);
+      final var op2 = Integer.parseInt(operators[1].substring(1));
+      final var result = Integer.parseInt(right);
 
-      if (operator == '-') {
-        return result + op2;
-      } else {
-        return result - op2;
-      }
+      return Operation.inverse(Operation.from(operator)).apply(result, op2);
     }
 
     final var isMissingSecondOperator = operators[1].contains("?");
@@ -68,26 +65,18 @@ public class FindTheUnknownDigitTest {
       final var op1 = Integer.parseInt(operators[0]);
       final var result = Integer.parseInt(right);
 
-      if (operator == '-') {
-        return Operation.ADD.apply(result, op1);
-      } else {
-        return Operation.SUBSTRACT.apply(result, op1);
-      }
+      return Operation.inverse(Operation.from(operator)).apply(result, op1);
     }
 
     final var op1 = Integer.parseInt(operators[0]);
     final var op2 = Integer.parseInt(operators[1].substring(1));
-    if (operator == '-') {
-      return Operation.SUBSTRACT.apply(op1, op2);
-    } else {
-      return Operation.ADD.apply(op1, op2);
-    }
+    return Operation.from(operator).apply(op1, op2);
   }
 
   enum Operation {
-    ADD((x, y) -> x + y),
-    SUBSTRACT((x, y) -> x - y),
-    MULTIPLY((x, y) -> x * y),
+    PLUS((x, y) -> x + y),
+    MINUS((x, y) -> x - y),
+    TIMES((x, y) -> x * y),
     DIVIDE((x, y) -> x / y);
 
     private final IntBinaryOperator operator;
@@ -98,6 +87,26 @@ public class FindTheUnknownDigitTest {
 
     public int apply(int x, int y) {
       return operator.applyAsInt(x, y);
+    }
+
+    public static Operation inverse(Operation operation) {
+      switch (operation) {
+        case PLUS: return Operation.MINUS;
+        case MINUS: return Operation.PLUS;
+        case TIMES: return Operation.DIVIDE;
+        case DIVIDE: return Operation.TIMES;
+
+        default: throw new AssertionError(format("Unknown operation: {0}", operation));
+      }
+    }
+
+    public static Operation from(Character character) {
+      switch (character) {
+        case '-': return Operation.MINUS;
+        case '+': return Operation.PLUS;
+
+        default: throw new AssertionError(format("Unknown character {0}", character));
+      }
     }
   }
 }
