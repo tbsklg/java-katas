@@ -1,9 +1,9 @@
 import org.junit.jupiter.api.Test;
 
-import java.text.MessageFormat;
 import java.util.function.IntBinaryOperator;
 
-import static java.text.MessageFormat.*;
+import static java.lang.Integer.parseInt;
+import static java.text.MessageFormat.format;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
@@ -18,6 +18,9 @@ import static org.assertj.core.api.Assertions.assertThat;
  * returns -1 if no digit works
  */
 public class FindTheUnknownDigitTest {
+
+  public static final String BY_EQUATION = "=";
+  private static final String RUNE = "?";
 
   @Test
   void shouldSolveResultForAddition() {
@@ -45,31 +48,31 @@ public class FindTheUnknownDigitTest {
   }
 
   private int solveExpression(String expression) {
-    final var bla = expression.split("=");
-    final var left = bla[0];
-    final var right = bla[1];
+    final var expressions = expression.split(BY_EQUATION);
+    final var left = expressions[0];
+    final var right = expressions[1];
 
-    final var operators = left.split("(?=[+-][0-9?])(?<=[0-9?])");
-    final var operator = operators[1].charAt(0);
+    final var terms = left.split("(?=[+-][0-9?])(?<=[0-9?])");
+    final var operator = terms[1].charAt(0);
 
-    final var isMissingInFirstOperator = operators[0].contains("?");
-    if (isMissingInFirstOperator) {
-      final var op2 = Integer.parseInt(operators[1].substring(1));
-      final var result = Integer.parseInt(right);
+    final var leftTerm = terms[0];
+    if (leftTerm.contains(RUNE)) {
+      final var op2 = parseInt(terms[1].substring(1));
+      final var result = parseInt(right);
 
       return Operation.inverse(Operation.from(operator)).apply(result, op2);
     }
 
-    final var isMissingSecondOperator = operators[1].contains("?");
-    if (isMissingSecondOperator) {
-      final var op1 = Integer.parseInt(operators[0]);
-      final var result = Integer.parseInt(right);
+    final var rightTerm = terms[1];
+    if (rightTerm.contains(RUNE)) {
+      final var op1 = parseInt(leftTerm);
+      final var result = parseInt(right);
 
       return Operation.inverse(Operation.from(operator)).apply(result, op1);
     }
 
-    final var op1 = Integer.parseInt(operators[0]);
-    final var op2 = Integer.parseInt(operators[1].substring(1));
+    final var op1 = parseInt(leftTerm);
+    final var op2 = parseInt(terms[1].substring(1));
     return Operation.from(operator).apply(op1, op2);
   }
 
@@ -91,21 +94,29 @@ public class FindTheUnknownDigitTest {
 
     public static Operation inverse(Operation operation) {
       switch (operation) {
-        case PLUS: return Operation.MINUS;
-        case MINUS: return Operation.PLUS;
-        case TIMES: return Operation.DIVIDE;
-        case DIVIDE: return Operation.TIMES;
+        case PLUS:
+          return Operation.MINUS;
+        case MINUS:
+          return Operation.PLUS;
+        case TIMES:
+          return Operation.DIVIDE;
+        case DIVIDE:
+          return Operation.TIMES;
 
-        default: throw new AssertionError(format("Unknown operation: {0}", operation));
+        default:
+          throw new AssertionError(format("Unknown operation: {0}", operation));
       }
     }
 
     public static Operation from(Character character) {
       switch (character) {
-        case '-': return Operation.MINUS;
-        case '+': return Operation.PLUS;
+        case '-':
+          return Operation.MINUS;
+        case '+':
+          return Operation.PLUS;
 
-        default: throw new AssertionError(format("Unknown character {0}", character));
+        default:
+          throw new AssertionError(format("Unknown character {0}", character));
       }
     }
   }
