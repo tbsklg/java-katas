@@ -4,6 +4,7 @@ import java.util.function.IntBinaryOperator;
 
 import static java.lang.Integer.parseInt;
 import static java.text.MessageFormat.format;
+import static org.assertj.core.api.Assertions.*;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
@@ -23,7 +24,7 @@ public class FindTheUnknownDigitTest {
   private static final String RUNE = "?";
 
   @Test
-  void shouldSolveResultForAddition() {
+  void shouldSolveRightExpressionForAddition() {
     assertThat(solveExpression("1+1=?")).isEqualTo(2);
     assertThat(solveExpression("2+1=?")).isEqualTo(3);
     assertThat(solveExpression("12+1=?")).isEqualTo(13);
@@ -31,39 +32,49 @@ public class FindTheUnknownDigitTest {
   }
 
   @Test
-  void shouldSolveFirstOperatorForAddition() {
+  void shouldSolveFirstTermForAddition() {
     assertThat(solveExpression("?+1=2")).isEqualTo(1);
     assertThat(solveExpression("?+200000=200548")).isEqualTo(548);
+    assertThat(solveExpression("?+-200000=200548")).isEqualTo(400548);
   }
 
   @Test
-  void shouldSolveSecondOperatorForAddition() {
+  void shouldSolveSecondTermForAddition() {
     assertThat(solveExpression("323456+?=567821")).isEqualTo(244365);
   }
 
   @Test
-  void shouldSoveResultForSubstraction() {
+  void shouldSolveRightExpressionForSubstraction() {
     assertThat(solveExpression("1-1=?")).isEqualTo(0);
     assertThat(solveExpression("-11-1=?")).isEqualTo(-12);
   }
 
+  @Test
+  void shouldSolveRightExpressionForMultiplication() {
+    assertThat(solveExpression("1*5=?")).isEqualTo(5);
+    assertThat(solveExpression("12345*-1=?")).isEqualTo(-12345);
+  }
+
   private int solveExpression(String expression) {
     final var expressions = expression.split(BY_EQUATION);
+    // <left> = <right>
     final var left = expressions[0];
     final var right = expressions[1];
 
-    final var terms = left.split("(?=[+-][0-9?])(?<=[0-9?])");
-    final var operator = terms[1].charAt(0);
-
+    // i.e. 123*-1 => [123, *-1]
+    final var terms = left.split("(?<=[0-9?])(?=[*+-])");
+    // <leftTerm> <operator> <rightTerm> = <result>
     final var leftTerm = terms[0];
+    final var rightTerm = terms[1];
+    final var operator = rightTerm.charAt(0);
+
     if (leftTerm.contains(RUNE)) {
-      final var op2 = parseInt(terms[1].substring(1));
+      final var op2 = parseInt(rightTerm.substring(1));
       final var result = parseInt(right);
 
       return Operation.inverse(Operation.from(operator)).apply(result, op2);
     }
 
-    final var rightTerm = terms[1];
     if (rightTerm.contains(RUNE)) {
       final var op1 = parseInt(leftTerm);
       final var result = parseInt(right);
@@ -72,7 +83,7 @@ public class FindTheUnknownDigitTest {
     }
 
     final var op1 = parseInt(leftTerm);
-    final var op2 = parseInt(terms[1].substring(1));
+    final var op2 = parseInt(rightTerm.substring(1));
     return Operation.from(operator).apply(op1, op2);
   }
 
@@ -114,6 +125,8 @@ public class FindTheUnknownDigitTest {
           return Operation.MINUS;
         case '+':
           return Operation.PLUS;
+        case '*':
+          return Operation.TIMES;
 
         default:
           throw new AssertionError(format("Unknown character {0}", character));
