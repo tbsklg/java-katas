@@ -13,6 +13,8 @@ import static org.assertj.core.api.Assertions.assertThat;
  * range of a number: -1000000 to 1000000
  * number never starts with 0
  * ? represents digit rune, never an operator
+ * rune is not any of other given digits
+ * if more than one rune matches, give the lowest one
  * expression contains 1-n ?s
  * expression has exactly one operator
  * <p>
@@ -32,6 +34,15 @@ public class FindTheUnknownDigitTest {
   }
 
   @Test
+  void shouldSolveAdditionWithMultipleRunes() {
+    assertThat(solveExpression("?0+3=?3")).isEqualTo(1);
+    assertThat(solveExpression("?+1=?")).isEqualTo(-1);
+    assertThat(solveExpression("?+?=?")).isEqualTo(-1);
+    assertThat(solveExpression("3?+71=1?1")).isEqualTo(0);
+    assertThat(solveExpression("1?+1?=26")).isEqualTo(3);
+  }
+
+  @Test
   void shouldSolveFirstTermForAddition() {
     assertThat(solveExpression("?+1=2")).isEqualTo(1);
     assertThat(solveExpression("?+200000=200548")).isEqualTo(548);
@@ -44,15 +55,23 @@ public class FindTheUnknownDigitTest {
   }
 
   @Test
-  void shouldSolveRightExpressionForSubstraction() {
+  void shouldSolveSubstraction() {
     assertThat(solveExpression("1-1=?")).isEqualTo(0);
     assertThat(solveExpression("-11-1=?")).isEqualTo(-12);
   }
 
   @Test
-  void shouldSolveRightExpressionForMultiplication() {
+  void shouldSolveMultiplication() {
     assertThat(solveExpression("1*5=?")).isEqualTo(5);
     assertThat(solveExpression("12345*-1=?")).isEqualTo(-12345);
+  }
+
+  @Test
+  void shouldSolveMultiplicationWithMultipleRunes() {
+    assertThat(solveExpression("-5?*-1=5?")).isEqualTo(0);
+    assertThat(solveExpression("??*??=302?")).isEqualTo(5);
+    assertThat(solveExpression("123*45?=5?088")).isEqualTo(6);
+    assertThat(solveExpression("??*1=??")).isEqualTo(2);
   }
 
   private int solveExpression(String expression) {
@@ -65,12 +84,93 @@ public class FindTheUnknownDigitTest {
     final var terms = left.split("(?<=[0-9?])(?=[*+-])");
     // <leftTerm> <operator> <rightTerm> = <result>
     final var leftTerm = terms[0];
-    final var rightTerm = terms[1];
-    final var operator = rightTerm.charAt(0);
+    final var rightTerm = terms[1].substring(1);
+    final var operator = terms[1].charAt(0);
+
+    if (leftTerm.contains(RUNE) && rightTerm.contains(RUNE) && right.contains(RUNE)) {
+      final var isRuneOnFirstPosition = leftTerm.indexOf('?') == 0 || rightTerm.indexOf('?') == 0 || right.indexOf('?') == 0;
+      var start = isRuneOnFirstPosition ? 1 : 0;
+
+      for (int rune = start; rune <= 9; rune++) {
+        final var result = parseInt(right.replace("?", String.valueOf(rune)));
+        final var op1 = parseInt(leftTerm.replace("?", String.valueOf(rune)));
+        final var op2 = parseInt(rightTerm.replace("?", String.valueOf(rune)));
+
+        if (Operation.from(operator).apply(op1, op2) == result) {
+          if (!expression.contains(String.valueOf(rune))) {
+            return rune;
+          }
+        }
+
+        if (rune == 9) {
+          return -1;
+        }
+      }
+    }
+
+    if (leftTerm.contains(RUNE) && rightTerm.contains(RUNE)) {
+        final var isRuneOnFirstPosition = leftTerm.indexOf('?') == 0 || rightTerm.indexOf('?') == 0 || right.indexOf('?') == 0;
+        var start = isRuneOnFirstPosition ? 1 : 0;
+
+        for (int rune = start; rune <= 9; rune++) {
+          final var op1 = parseInt(rightTerm.replace("?", String.valueOf(rune)));
+          final var op2 = parseInt(leftTerm.replace("?", String.valueOf(rune)));
+
+          if (Operation.from(operator).apply(op1, op2) == parseInt(right)) {
+            if (!expression.contains(String.valueOf(rune))) {
+              return rune;
+            }
+          }
+
+          if (rune == 9) {
+            return -1;
+          }
+        }
+      }
+
+    if (leftTerm.contains(RUNE) && right.contains(RUNE)) {
+        final var isRuneOnFirstPosition = leftTerm.indexOf('?') == 0 || rightTerm.indexOf('?') == 0 || right.indexOf('?') == 0;
+        var start = isRuneOnFirstPosition ? 1 : 0;
+
+        for (int rune = start; rune <= 9; rune++) {
+          final var result = parseInt(right.replace("?", String.valueOf(rune)));
+          final var op2 = parseInt(leftTerm.replace("?", String.valueOf(rune)));
+
+          if (Operation.inverse(Operation.from(operator)).apply(result, op2) == parseInt(rightTerm)) {
+            if (!expression.contains(String.valueOf(rune))) {
+              return rune;
+            }
+          }
+
+          if (rune == 9) {
+            return -1;
+          }
+        }
+      }
+
+    if (rightTerm.contains(RUNE) && right.contains(RUNE)) {
+      final var isRuneOnFirstPosition = leftTerm.indexOf('?') == 0 || rightTerm.indexOf('?') == 0 || right.indexOf('?') == 0;
+      var start = isRuneOnFirstPosition ? 1 : 0;
+
+      for (int rune = start; rune <= 9; rune++) {
+        final var result = parseInt(right.replace("?", String.valueOf(rune)));
+        final var op2 = parseInt(rightTerm.replace("?", String.valueOf(rune)));
+
+        if (Operation.inverse(Operation.from(operator)).apply(result, op2) == parseInt(leftTerm)) {
+          if (!expression.contains(String.valueOf(rune))) {
+            return rune;
+          }
+        }
+
+        if (rune == 9) {
+          return -1;
+        }
+      }
+    }
 
     if (leftTerm.contains(RUNE)) {
-      final var op2 = parseInt(rightTerm.substring(1));
       final var result = parseInt(right);
+      final var op2 = parseInt(rightTerm);
 
       return Operation.inverse(Operation.from(operator)).apply(result, op2);
     }
@@ -83,7 +183,7 @@ public class FindTheUnknownDigitTest {
     }
 
     final var op1 = parseInt(leftTerm);
-    final var op2 = parseInt(rightTerm.substring(1));
+    final var op2 = parseInt(rightTerm);
     return Operation.from(operator).apply(op1, op2);
   }
 
