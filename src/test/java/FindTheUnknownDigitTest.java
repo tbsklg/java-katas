@@ -38,6 +38,7 @@ public class FindTheUnknownDigitTest {
     assertThat(solveExpression("?0+3=?3")).isEqualTo(1);
     assertThat(solveExpression("?+1=?")).isEqualTo(-1);
     assertThat(solveExpression("?+?=?")).isEqualTo(-1);
+    assertThat(solveExpression("??+??=??")).isEqualTo(-1);
     assertThat(solveExpression("3?+71=1?1")).isEqualTo(0);
     assertThat(solveExpression("1?+1?=26")).isEqualTo(3);
   }
@@ -72,6 +73,8 @@ public class FindTheUnknownDigitTest {
     assertThat(solveExpression("??*??=302?")).isEqualTo(5);
     assertThat(solveExpression("123*45?=5?088")).isEqualTo(6);
     assertThat(solveExpression("??*1=??")).isEqualTo(2);
+    assertThat(solveExpression("??*??=302?")).isEqualTo(5);
+    assertThat(solveExpression("?*11=??")).isEqualTo(2);
   }
 
   private int solveExpression(String expression) {
