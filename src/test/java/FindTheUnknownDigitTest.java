@@ -25,54 +25,53 @@ public class FindTheUnknownDigitTest {
   private static final String RUNE = "?";
 
   @Test
-  void shouldSolveRightExpressionForAddition() {
+  void shouldSolveForONLYRightMissing() {
     assertThat(solveExpression("1+1=?")).isEqualTo(2);
     assertThat(solveExpression("2+1=?")).isEqualTo(3);
+    assertThat(solveExpression("1-1=?")).isEqualTo(0);
+    assertThat(solveExpression("-11-1=?")).isEqualTo(-1);
+    assertThat(solveExpression("2*5=?0")).isEqualTo(1);
+    assertThat(solveExpression("19--45=5?")).isEqualTo(-1);
   }
 
   @Test
-  void shouldSolveAdditionWithMultipleRunes() {
-    assertThat(solveExpression("?0+3=?3")).isEqualTo(1);
-    assertThat(solveExpression("?+1=?")).isEqualTo(-1);
-    assertThat(solveExpression("?+?=?")).isEqualTo(0);
-    assertThat(solveExpression("??+??=??")).isEqualTo(-1);
-    assertThat(solveExpression("3?+71=1?1")).isEqualTo(0);
-    assertThat(solveExpression("1?+1?=26")).isEqualTo(3);
-  }
-
-  @Test
-  void shouldSolveFirstTermForAddition() {
+  void shouldSolveForONLYLeftTermMissing() {
     assertThat(solveExpression("?+1=2")).isEqualTo(1);
     assertThat(solveExpression("?+200000=200548")).isEqualTo(548);
     assertThat(solveExpression("?+-200000=200548")).isEqualTo(400548);
   }
 
   @Test
-  void shouldSolveSecondTermForAddition() {
+  void shouldSolveForONLYRightTermMissing() {
     assertThat(solveExpression("323456+?=567821")).isEqualTo(244365);
   }
 
   @Test
-  void shouldSolveSubstraction() {
-    assertThat(solveExpression("1-1=?")).isEqualTo(0);
-    assertThat(solveExpression("-11-1=?")).isEqualTo(-1);
-    assertThat(solveExpression("19--45=5?")).isEqualTo(-1);
+  void shouldSolveForLeftTermAndRightTermMissing() {
+    assertThat(solveExpression("1?+1?=26")).isEqualTo(3);
+  }
+
+  @Test
+  void shouldSolveForLeftTermAndRightMissing() {
+    assertThat(solveExpression("?*11=??")).isEqualTo(2);
+    assertThat(solveExpression("??*1=??")).isEqualTo(2);
+    assertThat(solveExpression("-5?*-1=5?")).isEqualTo(0);
+    assertThat(solveExpression("?0+3=?3")).isEqualTo(1);
+    assertThat(solveExpression("?+1=?")).isEqualTo(-1);
+    assertThat(solveExpression("3?+71=1?1")).isEqualTo(0);
     assertThat(solveExpression("-?56373--9216=-?47157")).isEqualTo(8);
   }
 
   @Test
-  void shouldSolveMultiplication() {
-    assertThat(solveExpression("2*5=?0")).isEqualTo(1);
+  void shouldSolveForRightTermAndRightMissing() {
+    assertThat(solveExpression("123*45?=5?088")).isEqualTo(6);
   }
 
   @Test
-  void shouldSolveMultiplicationWithMultipleRunes() {
-    assertThat(solveExpression("-5?*-1=5?")).isEqualTo(0);
+  void shouldSolveForLeftTermRightTermAndRightMissing() {
     assertThat(solveExpression("??*??=302?")).isEqualTo(5);
-    assertThat(solveExpression("123*45?=5?088")).isEqualTo(6);
-    assertThat(solveExpression("??*1=??")).isEqualTo(2);
-    assertThat(solveExpression("??*??=302?")).isEqualTo(5);
-    assertThat(solveExpression("?*11=??")).isEqualTo(2);
+    assertThat(solveExpression("??+??=??")).isEqualTo(-1);
+    assertThat(solveExpression("?+?=?")).isEqualTo(0);
     assertThat(solveExpression("123?45*?=?")).isEqualTo(0);
   }
 
