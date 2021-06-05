@@ -2,10 +2,8 @@ import org.junit.jupiter.api.Test;
 
 import java.util.Map;
 
-import static java.lang.Integer.*;
-import static java.lang.String.valueOf;
-import static org.assertj.core.api.Assertions.*;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 public class ShortestKnightPathTest {
 
@@ -14,7 +12,7 @@ public class ShortestKnightPathTest {
   }
 
   class Board {
-    
+
   }
 
   @Test
@@ -39,8 +37,9 @@ public class ShortestKnightPathTest {
 
   @Test
   void shouldThrowException() {
-    assertThatThrownBy(()->Coordinates.from("i1")).isInstanceOf(IllegalStateException.class);
-    assertThatThrownBy(()->Coordinates.from("a9")).isInstanceOf(IllegalStateException.class);
+    assertThatThrownBy(() -> Coordinates.from("i1")).isInstanceOf(IllegalStateException.class);
+    assertThatThrownBy(() -> Coordinates.from("a9")).isInstanceOf(IllegalStateException.class);
+    assertThatThrownBy(() -> Coordinates.from("a92")).isInstanceOf(AssertionError.class);
   }
 
   private static class Coordinates {
