@@ -1,37 +1,81 @@
-import org.assertj.core.api.Assertions;
-import org.assertj.core.internal.bytebuddy.build.HashCodeAndEqualsPlugin;
+import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.Test;
 
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
+import java.util.Arrays;
 import java.util.stream.Collectors;
-import java.util.stream.LongStream;
 
-import static java.lang.Integer.parseInt;
-import static java.lang.Long.parseLong;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class NextBiggerNumberTest {
   public static long nextBiggerNumber(long n) {
     final var nAsString = String.valueOf(n);
-    final var sorted = List.of(nAsString.split("")).stream()
-            .sorted(Comparator.reverseOrder())
+    final var digits = nAsString.chars()
+            .mapToObj(Digit::valueOf)
+            .toArray(Digit[]::new);
+
+    nextBiggerNumber(digits);
+
+    final var result = Arrays.stream(digits)
+            .map(d -> Character.toString(d.getValue()))
             .collect(Collectors.joining());
 
-    if (Long.valueOf(n).equals(Long.valueOf(sorted))) {
+    if (result.equals(String.valueOf(n))) {
       return -1;
     }
 
-    return Long.parseLong(sorted);
+    return Long.parseLong(result);
   }
 
-  private static long swap(long first, long second) {
-    final var firstAsString = String.valueOf(first);
-    final var secondAsString = String.valueOf(second);
+  private static void nextBiggerNumber(Digit[] a) {
+    int N = a.length;
 
-    return parseLong(secondAsString.concat(firstAsString));
+    for (int i = N - 1; i > 0; i--) {
+      if (less(a[i - 1], a[i])) {
+        exch(a, i, i - 1);
+        break;
+      }
+    }
   }
+
+  private static boolean less(Digit a, Digit b) {
+    return a.compareTo(b) < 0;
+  }
+
+  private static void exch(Digit[] a, int i, int j) {
+    Digit swap = a[i];
+    a[i] = a[j];
+    a[j] = swap;
+  }
+
+  private static class Digit implements Comparable<Digit> {
+
+    private final int value;
+
+    private Digit(int value) {
+      this.value = value;
+    }
+
+    private static Digit valueOf(int value) {
+      return new Digit(value);
+    }
+
+    public int getValue() {
+      return value;
+    }
+
+    @Override
+    public int compareTo(@NotNull Digit o) {
+      return Integer.compare(this.value, o.value);
+    }
+
+    @Override
+    public String toString() {
+      return "Digit{" +
+              "value=" + value +
+              '}';
+    }
+  }
+
 
   @Test
   void shouldCalculateForSingleDigitNumber() {
@@ -51,5 +95,9 @@ public class NextBiggerNumberTest {
     assertThat(nextBiggerNumber(101)).isEqualTo(110);
     assertThat(nextBiggerNumber(110)).isEqualTo(-1);
     assertThat(nextBiggerNumber(120)).isEqualTo(210);
+    assertThat(nextBiggerNumber(102)).isEqualTo(120);
+    assertThat(nextBiggerNumber(513)).isEqualTo(531);
+    assertThat(nextBiggerNumber(414)).isEqualTo(441);
+    assertThat(nextBiggerNumber(144)).isEqualTo(414);
   }
 }
