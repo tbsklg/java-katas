@@ -1,4 +1,4 @@
-import org.jetbrains.annotations.NotNull;
+import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
@@ -10,13 +10,13 @@ public class NextBiggerNumberTest {
   public static long nextBiggerNumber(long n) {
     final var nAsString = String.valueOf(n);
     final var digits = nAsString.chars()
-            .mapToObj(Digit::valueOf)
-            .toArray(Digit[]::new);
+            .map(c -> c - '0')
+            .toArray();
 
     nextBiggerNumber(digits);
 
     final var result = Arrays.stream(digits)
-            .map(d -> Character.toString(d.getValue()))
+            .mapToObj(String::valueOf)
             .collect(Collectors.joining());
 
     if (result.equals(String.valueOf(n))) {
@@ -26,54 +26,49 @@ public class NextBiggerNumberTest {
     return Long.parseLong(result);
   }
 
-  private static void nextBiggerNumber(Digit[] a) {
-    int N = a.length;
+  private static void nextBiggerNumber(int[] a) {
+    final var N = a.length;
 
+    var swapAt = N - 1;
     for (int i = N - 1; i > 0; i--) {
       if (less(a[i - 1], a[i])) {
-        exch(a, i, i - 1);
+        swapAt = i - 1;
         break;
       }
     }
+
+    final var nextBiggest = a[swapAt];
+    var currentDiff = Integer.MAX_VALUE;
+    var indexToSwap = N - 1;
+    for (int i = swapAt; i < N - 1; i++) {
+      final var appleCake = a[i] - nextBiggest;
+      if (appleCake < currentDiff && appleCake > 0) {
+        currentDiff = a[i] - nextBiggest;
+        indexToSwap = i;
+      }
+    }
+
+    exch(a, indexToSwap, swapAt);
+
+    for (int i = swapAt + 1; i < N; i++) {
+      int min = i;
+      for (int j = i + 1; j < N; j++) {
+        if (less(a[j], a[min])) {
+          min = j;
+        }
+      }
+      exch(a, i, min);
+    }
   }
 
-  private static boolean less(Digit a, Digit b) {
-    return a.compareTo(b) < 0;
+  private static boolean less(int a, int b) {
+    return a < b;
   }
 
-  private static void exch(Digit[] a, int i, int j) {
-    Digit swap = a[i];
+  private static void exch(int[] a, int i, int j) {
+    int swap = a[i];
     a[i] = a[j];
     a[j] = swap;
-  }
-
-  private static class Digit implements Comparable<Digit> {
-
-    private final int value;
-
-    private Digit(int value) {
-      this.value = value;
-    }
-
-    private static Digit valueOf(int value) {
-      return new Digit(value);
-    }
-
-    public int getValue() {
-      return value;
-    }
-
-    @Override
-    public int compareTo(@NotNull Digit o) {
-      return Integer.compare(this.value, o.value);
-    }
-
-    @Override
-    public String toString() {
-      return "Digit{" +
-              "value=" + value +
-              '}';
-    }
   }
 
 
@@ -94,10 +89,25 @@ public class NextBiggerNumberTest {
   void shouldCalculateForThreeDigetNumber() {
     assertThat(nextBiggerNumber(101)).isEqualTo(110);
     assertThat(nextBiggerNumber(110)).isEqualTo(-1);
-    assertThat(nextBiggerNumber(120)).isEqualTo(210);
+    assertThat(nextBiggerNumber(120)).isEqualTo(201);
     assertThat(nextBiggerNumber(102)).isEqualTo(120);
     assertThat(nextBiggerNumber(513)).isEqualTo(531);
     assertThat(nextBiggerNumber(414)).isEqualTo(441);
     assertThat(nextBiggerNumber(144)).isEqualTo(414);
+  }
+
+  @Test
+  void shouldCalculateForFourDigetNumber() {
+    assertThat(nextBiggerNumber(2017)).isEqualTo(2071);
+  }
+
+  @Test
+  void shouldCalculateForFiveDigetNumber() {
+    assertThat(nextBiggerNumber(10990)).isEqualTo(19009);
+  }
+
+  @Test
+  void shouldCalculateForBigNumber() {
+    Assertions.assertThat(nextBiggerNumber(1090879862)).isEqualTo(1090882679);
   }
 }
