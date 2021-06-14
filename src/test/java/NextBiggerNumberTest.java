@@ -1,4 +1,3 @@
-import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
@@ -40,10 +39,10 @@ public class NextBiggerNumberTest {
     final var nextBiggest = a[swapAt];
     var currentDiff = Integer.MAX_VALUE;
     var indexToSwap = N - 1;
-    for (int i = swapAt; i < N - 1; i++) {
+    for (int i = swapAt + 1; i < N; i++) {
       final var appleCake = a[i] - nextBiggest;
       if (appleCake < currentDiff && appleCake > 0) {
-        currentDiff = a[i] - nextBiggest;
+        currentDiff = appleCake;
         indexToSwap = i;
       }
     }
@@ -108,6 +107,7 @@ public class NextBiggerNumberTest {
 
   @Test
   void shouldCalculateForBigNumber() {
-    Assertions.assertThat(nextBiggerNumber(1090879862)).isEqualTo(1090882679);
+//    Assertions.assertThat(nextBiggerNumber(1090879862)).isEqualTo(1090882679);
+    assertThat(nextBiggerNumber(1805583884)).isEqualTo(1805584388);
   }
 }
