@@ -6,23 +6,34 @@ import java.util.stream.Collectors;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class NextBiggerNumberTest {
+  private static class Numbers {
+
+    private static int[] toIntArray(long n) {
+      final var nAsString = String.valueOf(n);
+      return nAsString.chars()
+              .map(c -> c - '0')
+              .toArray();
+    }
+
+    private static Long parseLong(int [] a) {
+      return Long.parseLong(Arrays.stream(a)
+              .mapToObj(String::valueOf)
+              .collect(Collectors.joining()));
+    }
+  }
+
   public static long nextBiggerNumber(long n) {
-    final var nAsString = String.valueOf(n);
-    final var digits = nAsString.chars()
-            .map(c -> c - '0')
-            .toArray();
+    final var digits = Numbers.toIntArray(n);
 
     nextBiggerNumber(digits);
 
-    final var result = Arrays.stream(digits)
-            .mapToObj(String::valueOf)
-            .collect(Collectors.joining());
+    final var result = Numbers.parseLong(digits);
 
-    if (result.equals(String.valueOf(n))) {
+    if (result.equals(n)) {
       return -1;
     }
 
-    return Long.parseLong(result);
+    return result;
   }
 
   private static void nextBiggerNumber(int[] a) {
