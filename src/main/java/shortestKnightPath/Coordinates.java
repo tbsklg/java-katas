@@ -3,7 +3,7 @@ package shortestKnightPath;
 import java.util.Map;
 import java.util.Objects;
 
-public class Coordinates {
+public class  Coordinates {
   private final int x;
   private final int y;
 
