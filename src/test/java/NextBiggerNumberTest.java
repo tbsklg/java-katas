@@ -6,81 +6,79 @@ import java.util.stream.Collectors;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class NextBiggerNumberTest {
-  private static class Numbers {
+  public static long nextBiggerNumber(long n) {
+    final var digits = Number.toIntArray(n);
+    final var nextBiggerNumber = Number.parseLong(calculateNextBiggerNumber(digits));
+
+    if (nextBiggerNumber.equals(n)) {
+      return -1;
+    }
+
+    return nextBiggerNumber;
+  }
+
+  private static int[] calculateNextBiggerNumber(int[] a) {
+    final var copy = new int[a.length];
+    System.arraycopy(a, 0, copy, 0, a.length);
+
+    final var swapIndex = Number.getSwapIndex(copy);
+    final var indexToSwap = Number.getIndexOfNextGreatest(copy, swapIndex);
+    Number.swap(copy, indexToSwap, swapIndex);
+    Number.sort(copy, swapIndex);
+
+    return copy;
+  }
+
+  private static class Number {
+
+    private static void swap(int[] a, int i, int j) {
+      int swap = a[i];
+      a[i] = a[j];
+      a[j] = swap;
+    }
+
+    private static int getSwapIndex(int[] a) {
+      var currentIndex = a.length - 1;
+      for (int i = a.length - 1; i > 0; i--) {
+        if (a[i - 1] < a[i]) {
+          currentIndex = i - 1;
+          break;
+        }
+      }
+      return currentIndex;
+    }
+
+    private static int getIndexOfNextGreatest(int[] a, int index) {
+      final var nextBiggest = a[index];
+
+      var minDelta = Integer.MAX_VALUE;
+      var currentIndex = a.length - 1;
+      for (int i = index + 1; i < a.length; i++) {
+        final var currentDiff = a[i] - nextBiggest;
+        if (currentDiff < minDelta && currentDiff > 0) {
+          minDelta = currentDiff;
+          currentIndex = i;
+        }
+      }
+      return currentIndex;
+    }
 
     private static int[] toIntArray(long n) {
-      final var nAsString = String.valueOf(n);
-      return nAsString.chars()
+      return String.valueOf(n).chars()
               .map(c -> c - '0')
               .toArray();
     }
 
-    private static Long parseLong(int [] a) {
+    private static Long parseLong(int[] a) {
       return Long.parseLong(Arrays.stream(a)
               .mapToObj(String::valueOf)
               .collect(Collectors.joining()));
     }
-  }
 
-  public static long nextBiggerNumber(long n) {
-    final var digits = Numbers.toIntArray(n);
-
-    nextBiggerNumber(digits);
-
-    final var result = Numbers.parseLong(digits);
-
-    if (result.equals(n)) {
-      return -1;
-    }
-
-    return result;
-  }
-
-  private static void nextBiggerNumber(int[] a) {
-    final var N = a.length;
-
-    var swapAt = N - 1;
-    for (int i = N - 1; i > 0; i--) {
-      if (less(a[i - 1], a[i])) {
-        swapAt = i - 1;
-        break;
-      }
-    }
-
-    final var nextBiggest = a[swapAt];
-    var currentDiff = Integer.MAX_VALUE;
-    var indexToSwap = N - 1;
-    for (int i = swapAt + 1; i < N; i++) {
-      final var appleCake = a[i] - nextBiggest;
-      if (appleCake < currentDiff && appleCake > 0) {
-        currentDiff = appleCake;
-        indexToSwap = i;
-      }
-    }
-
-    exch(a, indexToSwap, swapAt);
-
-    for (int i = swapAt + 1; i < N; i++) {
-      int min = i;
-      for (int j = i + 1; j < N; j++) {
-        if (less(a[j], a[min])) {
-          min = j;
-        }
-      }
-      exch(a, i, min);
+    private static void sort(int[] a, int index) {
+      Arrays.sort(a, index + 1, a.length);
     }
   }
-
-  private static boolean less(int a, int b) {
-    return a < b;
-  }
-
-  private static void exch(int[] a, int i, int j) {
-    int swap = a[i];
-    a[i] = a[j];
-    a[j] = swap;
-  }
-
 
   @Test
   void shouldCalculateForSingleDigitNumber() {
@@ -118,7 +116,7 @@ public class NextBiggerNumberTest {
 
   @Test
   void shouldCalculateForBigNumber() {
-//    Assertions.assertThat(nextBiggerNumber(1090879862)).isEqualTo(1090882679);
+    assertThat(nextBiggerNumber(1090879862)).isEqualTo(1090882679);
     assertThat(nextBiggerNumber(1805583884)).isEqualTo(1805584388);
   }
 }
