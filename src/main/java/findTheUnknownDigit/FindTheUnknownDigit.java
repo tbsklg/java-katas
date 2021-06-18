@@ -1,7 +1,5 @@
 package findTheUnknownDigit;
 
-import findTheUnknownDigit.ExpressionParser;
-
 public class FindTheUnknownDigit {
   static final String RUNE = "?";
 
