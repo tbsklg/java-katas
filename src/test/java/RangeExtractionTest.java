@@ -1,10 +1,8 @@
-import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 
-import java.util.Arrays;
-import java.util.stream.Collectors;
+import java.util.StringJoiner;
 
-import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
 
 public class RangeExtractionTest {
 
@@ -22,6 +20,13 @@ public class RangeExtractionTest {
   @Test
   void shouldExtractForTwoInts() {
     assertThat(rangeExtraction(with(-6, -3))).isEqualTo("-6,-3");
+    assertThat(rangeExtraction(with(-6, 0))).isEqualTo("-6,0");
+    assertThat(rangeExtraction(with(60, 0))).isEqualTo("60,0");
+  }
+
+  @Test
+  void shouldExtractForThreeIntsInARow() {
+    assertThat(rangeExtraction(with(-3, -2, -1))).isEqualTo("-3--1");
   }
 
   private static int[] with(int... n) {
@@ -31,11 +36,34 @@ public class RangeExtractionTest {
     return result;
   }
 
-  private static String rangeExtraction(int[] ints) {
-    final var result = Arrays.stream(ints)
-            .mapToObj(String::valueOf)
-            .collect(Collectors.joining(","));
+  private static String rangeExtraction(int[] arr) {
+    final var result = new StringJoiner(",");
 
-    return result;
+    int i1 = 0;
+    int i2 = 0;
+
+    while (i1 < arr.length) {
+      do {
+        i2++;
+      } while (i2 < arr.length && arr[i2 - 1] + 1 == arr[i2]);
+      if (i2 - i1 > 2) {
+        final var minus = new StringJoiner("-");
+        minus.add(String.valueOf(arr[i1]));
+        minus.add(String.valueOf(arr[i2 - 1]));
+        result.merge(minus);
+        i1 = i2;
+      } else {
+        for (; i1 < i2; i1++)
+          result.add(String.valueOf(arr[i1]));
+        }
+    }
+
+    return result.toString();
+  }
+
+
+  private static void separate(StringBuilder result, String s, int i1) {
+    result.append(s);
+    result.append(i1);
   }
 }

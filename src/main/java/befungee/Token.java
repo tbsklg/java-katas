@@ -1,7 +1,5 @@
 package befungee;
 
-import com.sun.jdi.IntegerType;
-
 public class Token {
   public final InterpreterType type;
   public final Integer value;
