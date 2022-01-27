@@ -45,12 +45,11 @@ class ValidateParentheses {
 
             final var newDeque = new ArrayDeque<T>();
             newDeque.addAll(this.deque);
-
+            
             final var first = newDeque.pop();
-            final var myStack = new MyStack<T>(deque);
-            final var tuple = Pair.with(myStack, first);
+            final var myStack = new MyStack<T>(newDeque);
 
-            return Optional.of(tuple);
+            return Optional.of(Pair.with(myStack, first));
         }
 
         public boolean isEmpty() {
@@ -97,24 +96,24 @@ class ValidateParentheses {
         return head == ')' || isOpenParentheses(head);
     }
 
-    private static class Pair<A, B> {
-        private final A left;
-        private final B right;
+    private static class Pair<L, R> {
+        private final L left;
+        private final R right;
 
-        private Pair(A left, B right) {
+        private Pair(L left, R right) {
             this.left = left;
             this.right = right;
         }
 
-        public static <A, B> Pair<A, B> with(final A left, final B right) {
-            return new Pair<A, B>(left, right);
+        public static <L, R> Pair<L, R> with(final L left, final R right) {
+            return new Pair<L, R>(left, right);
         }
 
-        public A fst() {
+        public L fst() {
             return left;
         }
 
-        public B snd() {
+        public R snd() {
             return right;
         }
     }
