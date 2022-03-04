@@ -8,6 +8,7 @@ import static java.lang.Math.floor;
 import static java.lang.Math.pow;
 import static java.lang.Math.sqrt;
 import static java.util.Arrays.stream;
+import static java.util.Optional.ofNullable;
 import static java.util.stream.Stream.iterate;
 
 public class Tour {
@@ -19,10 +20,10 @@ public class Tour {
                             .filter(t -> t[0].equals(f))
                             .findFirst()
                     )
-                    .filter(Optional::isPresent)
-                    .map(Optional::get)
+                    .flatMap(Optional::stream)
                     .map(t -> t[1])
-                    .map(t -> h.getOrDefault(t, 0.0))
+                    .map(t -> ofNullable(h.get(t)))
+                    .flatMap(Optional::stream)
                     .collect(Collectors.toList());
 
     final var distancesBetweenFriends =
