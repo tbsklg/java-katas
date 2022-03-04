@@ -30,7 +30,7 @@ public class Tour {
             iterate(0, i -> i + 1)
                     .limit(distancesForFriends.size() - 1)
                     .map(i -> distance(distancesForFriends.get(i), distancesForFriends.get(i + 1)))
-                    .reduce((double) 0, Double::sum);
+                    .reduce(0.0, Double::sum);
 
     return (int) floor(
             distancesForFriends.get(0)
