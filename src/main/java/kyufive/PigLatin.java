@@ -26,7 +26,6 @@ public class PigLatin {
       return str;
     }
 
-
     final var head = str.substring(0, 1);
     final var tail = str.substring(1);
     final var ay = "ay";
