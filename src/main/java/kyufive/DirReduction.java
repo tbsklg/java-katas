@@ -47,25 +47,25 @@ public class DirReduction {
               .orElseGet(() -> new Path(MyStack.empty()));
     }
 
-    private Path reduce(Direction[] arr) {
-      if (arr.length == 0) {
+    private Path reduce(Direction[] dirs) {
+      if (dirs.length == 0) {
         return this;
       }
 
-      final var currentDirection = arr[0];
-      final var furtherDirs = copyOfRange(arr, 1, arr.length);
+      final var currentDir = dirs[0];
+      final var furtherDirs = copyOfRange(dirs, 1, dirs.length);
 
       final var maybeLastDir = this.last();
       if (maybeLastDir.isEmpty()) {
-        return this.add(currentDirection).reduce(furtherDirs);
+        return this.add(currentDir).reduce(furtherDirs);
       }
 
       final var lastDir = maybeLastDir.get();
-      if (currentDirection.isOppositeOf(lastDir)) {
+      if (currentDir.isOppositeOf(lastDir)) {
         return this.remove().reduce(furtherDirs);
       }
 
-      return this.add(currentDirection).reduce(furtherDirs);
+      return this.add(currentDir).reduce(furtherDirs);
     }
 
     public String[] toArray() {
