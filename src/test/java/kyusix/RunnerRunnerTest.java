@@ -2,11 +2,11 @@ package kyusix;
 
 import org.junit.jupiter.api.Test;
 
-import static kyusix.MazeRunner.Labyrinth.*;
+import static kyusix.MazeRunner.Maze.*;
 import static kyusix.MazeRunner.mazeRunner;
 import static org.assertj.core.api.Assertions.assertThat;
 
-class MazeRunnerTest {
+class RunnerRunnerTest {
 
   private static final int[][] maze = {
           {1, 1, 1, 1, 1, 1, 1},

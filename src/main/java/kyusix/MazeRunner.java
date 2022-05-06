@@ -11,28 +11,28 @@ import static kyusix.MazeRunner.Point.*;
 public class MazeRunner {
 
   public static String mazeRunner(int[][] maze, char[] directions) {
-    Labyrinth labyrinth = Labyrinth.from(maze);
-    return Maze.in(labyrinth).navigate(directions);
+    Maze labyrinth = Maze.from(maze);
+    return Runner.in(labyrinth).navigate(directions);
   }
 
-  static class Maze {
-    private final Labyrinth labyrinth;
+  static class Runner {
+    private final Maze maze;
 
-    private Maze(Labyrinth labyrinth) {
-      this.labyrinth = labyrinth;
+    private Runner(Maze maze) {
+      this.maze = maze;
     }
 
-    public static Maze in(Labyrinth labyrinth) {
-      return new Maze(labyrinth);
+    public static Runner in(Maze maze) {
+      return new Runner(maze);
     }
 
     public String navigate(char[] directions) {
-      return navigate(labyrinth.start(), directions);
+      return navigate(maze.start(), directions);
     }
 
     private String navigate(Position current, char[] directions) {
-      if (this.labyrinth.position(current) == FINISH) return FINISH.value();
-      if (this.labyrinth.position(current) == DEAD) return DEAD.value();
+      if (this.maze.position(current) == FINISH) return FINISH.value();
+      if (this.maze.position(current) == DEAD) return DEAD.value();
       if (directions.length == 0) return LOST.value();
 
       final var currentDirection = Direction.from(directions[0]);
@@ -66,17 +66,17 @@ public class MazeRunner {
     }
   }
 
-  static class Labyrinth {
+  static class Maze {
     private final int[][] board;
     private final int dimension;
 
-    private Labyrinth(int[][] board) {
+    private Maze(int[][] board) {
       this.board = board;
       this.dimension = this.board.length;
     }
 
-    public static Labyrinth from(int[][] raw) {
-      return new Labyrinth(raw);
+    public static Maze from(int[][] raw) {
+      return new Maze(raw);
     }
 
     public Position start() {
