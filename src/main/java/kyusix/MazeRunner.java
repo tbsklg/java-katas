@@ -11,8 +11,7 @@ import static kyusix.MazeRunner.Point.*;
 public class MazeRunner {
 
   public static String mazeRunner(int[][] maze, char[] directions) {
-    Maze labyrinth = Maze.from(maze);
-    return Runner.in(labyrinth).navigate(directions);
+    return Runner.in(Maze.from(maze)).navigate(directions);
   }
 
   static class Runner {
