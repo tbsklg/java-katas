@@ -6,7 +6,7 @@ import static kyusix.MazeRunner.Maze.*;
 import static kyusix.MazeRunner.mazeRunner;
 import static org.assertj.core.api.Assertions.assertThat;
 
-class RunnerRunnerTest {
+class MazeRunnerTest {
 
   private static final int[][] maze = {
           {1, 1, 1, 1, 1, 1, 1},

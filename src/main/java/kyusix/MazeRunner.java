@@ -11,57 +11,35 @@ import static kyusix.MazeRunner.Point.*;
 public class MazeRunner {
 
   public static String mazeRunner(int[][] maze, char[] directions) {
-    return Runner.in(Maze.from(maze)).navigate(directions);
+    final var labyrinth = Maze.from(maze);
+    final var start = labyrinth.start();
+    return Adventurer.in(labyrinth, start).run(directions);
   }
 
-  static class Runner {
+  static class Adventurer {
     private final Maze maze;
-
-    private Runner(Maze maze) {
-      this.maze = maze;
-    }
-
-    public static Runner in(Maze maze) {
-      return new Runner(maze);
-    }
-
-    public String navigate(char[] directions) {
-      return navigate(maze.start(), directions);
-    }
-
-    private String navigate(Position current, char[] directions) {
-      if (this.maze.position(current) == FINISH) return FINISH.value();
-      if (this.maze.position(current) == DEAD) return DEAD.value();
-      if (directions.length == 0) return LOST.value();
-
-      final var currentDirection = Direction.from(directions[0]);
-      final var nextCoordinate = Move.from(current).towards(currentDirection);
-
-      final var furtherDirections = copyOfRange(directions, 1, directions.length);
-
-      return navigate(nextCoordinate, furtherDirections);
-    }
-  }
-
-  static class Move {
     private final Position position;
-    private final Map<Direction, Function<Position, Position>> directions = Map.of(
-            NORTH, c -> Position.from(c.row() - 1, c.column()),
-            SOUTH, c -> Position.from(c.row() + 1, c.column()),
-            WEST, c -> Position.from(c.row(), c.column() - 1),
-            EAST, c -> Position.from(c.row(), c.column() + 1)
-    );
 
-    private Move(Position position) {
+    private Adventurer(Maze maze, Position position) {
+      this.maze = maze;
       this.position = position;
     }
 
-    public static Move from(Position current) {
-      return new Move(current);
+    public static Adventurer in(Maze maze, Position position) {
+      return new Adventurer(maze, position);
     }
 
-    public Position towards(Direction direction) {
-      return directions.get(direction).apply(this.position);
+    private String run(char[] directions) {
+      if (this.maze.at(this.position) == FINISH) return FINISH.value();
+      if (this.maze.at(this.position) == DEAD) return DEAD.value();
+      if (directions.length == 0) return LOST.value();
+
+      final var currentDirection = Direction.from(directions[0]);
+      final var nextPosition = this.position.towards(currentDirection);
+
+      final var furtherDirections = copyOfRange(directions, 1, directions.length);
+
+      return Adventurer.in(this.maze, nextPosition).run(furtherDirections);
     }
   }
 
@@ -90,7 +68,7 @@ public class MazeRunner {
       throw new RuntimeException("No start no fun!");
     }
 
-    public Point position(Position position) {
+    public Point at(Position position) {
       if (dead(position)) return DEAD;
       if (finish(position)) return FINISH;
 
@@ -147,6 +125,12 @@ public class MazeRunner {
   static class Position {
     private final int row;
     private final int column;
+    private final Map<Direction, Function<Position, Position>> directions = Map.of(
+            NORTH, c -> Position.from(c.row() - 1, c.column()),
+            SOUTH, c -> Position.from(c.row() + 1, c.column()),
+            WEST, c -> Position.from(c.row(), c.column() - 1),
+            EAST, c -> Position.from(c.row(), c.column() + 1)
+    );
 
     private Position(int row, int column) {
       this.row = row;
@@ -163,6 +147,10 @@ public class MazeRunner {
 
     public int column() {
       return this.column;
+    }
+
+    public Position towards(Direction direction) {
+      return directions.get(direction).apply(this);
     }
 
     @Override
