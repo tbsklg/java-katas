@@ -1,5 +1,6 @@
-package kyufive;
+package kyusix;
 
+import kyusix.ISBNConverter;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 

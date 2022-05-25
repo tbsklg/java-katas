@@ -1,4 +1,4 @@
-package kyufive;
+package kyusix;
 
 import java.util.Arrays;
 import java.util.List;
@@ -11,92 +11,55 @@ import static java.util.stream.Collectors.toList;
 public class ISBNConverter {
 
   public static String isbnConverter(String isbn) {
-    return Convert
-            .from(ISBN.from(isbn))
-            .toISBN13()
-            .asString();
+    return ISBN10.from(isbn).toIsbn13().asString();
   }
 
-  static class ISBN {
+  static class ISBN10 {
 
-    private final String raw;
     private final Numbers numbers;
 
-    private ISBN(String raw, Numbers numbers) {
-      this.raw = raw;
+    private ISBN10(Numbers numbers) {
       this.numbers = numbers;
     }
 
-    public static ISBN from(String raw) {
-      return new ISBN(raw, numbersFrom(raw));
+    public static ISBN10 from(String raw) {
+      return new ISBN10(numbersFrom(raw));
     }
 
-    public static ISBN from(Numbers numbers) {
-      final var raw = asString(numbers);
-
-      return new ISBN(raw, numbers);
-    }
-
-    private static String asString(Numbers numbers) {
-      return numbers
-              .stream()
-              .map(Number::asString)
-              .collect(joining("-"));
+    public static ISBN10 from(Numbers numbers) {
+      return new ISBN10(numbers);
     }
 
     private static Numbers numbersFrom(String raw) {
-      return Numbers.from(
-              Arrays.stream(raw.split("-"))
-                      .map(String::valueOf)
-                      .map(Number::from)
-                      .collect(toList())
-      );
+      return Numbers.from(Arrays.stream(raw.split("-")).map(String::valueOf).map(Number::from).collect(toList()));
     }
 
-    public String asString() {
-      return this.raw;
-    }
+    public ISBN13 toIsbn13() {
+      final var withPrefix = this.numbers.prepend(Number.from(978));
+      final var checksum = Number.from(Checksum.from(withPrefix.init()));
 
-    public Numbers numbers() {
-      return this.numbers;
+      final var numbers = withPrefix.init().append(checksum);
+      return ISBN13.from(numbers);
     }
   }
 
-  static class Convert {
+  static class ISBN13 {
 
     private final Numbers numbers;
 
-    private Convert(Numbers numbers) {
+    private ISBN13(Numbers numbers) {
       this.numbers = numbers;
     }
 
-    public static Convert from(ISBN isbn) {
-      return new Convert(isbn.numbers());
+    public static ISBN13 from(Numbers numbers) {
+      return new ISBN13(numbers);
     }
 
-    public ISBN toISBN13() {
-      return addPrefix()
-              .appendChecksum()
-              .toIsbn();
-    }
-
-    private Convert addPrefix() {
-      final var prefix = Number.from(978);
-      final var numbers = this.numbers.prepend(prefix);
-
-      return new Convert(numbers);
-    }
-
-    private Convert appendChecksum() {
-      final var checksum = Number.from(Checksum.from(this.numbers.init()));
-      final var numbers = this.numbers.init().append(checksum);
-
-      return new Convert(numbers);
-    }
-
-
-    private ISBN toIsbn() {
-      return ISBN.from(this.numbers);
+    private String asString() {
+      return this.numbers
+              .stream()
+              .map(Number::asString)
+              .collect(joining("-"));
     }
   }
 
@@ -108,8 +71,7 @@ public class ISBNConverter {
     }
 
     public static int from(Numbers numbers) {
-      List<Integer> digits = Stream.of(numbers)
-              .flatMap(Numbers::stream)
+      List<Integer> digits = numbers.stream()
               .flatMap(Number::stream)
               .collect(toList());
 
@@ -156,18 +118,11 @@ public class ISBNConverter {
     }
 
     private static List<Integer> extractDigits(String raw) {
-      return raw
-              .chars()
-              .filter(Character::isDigit)
-              .mapToObj(Character::toString)
-              .map(Integer::valueOf)
-              .collect(toList());
+      return raw.chars().filter(Character::isDigit).mapToObj(Character::toString).map(Integer::valueOf).collect(toList());
     }
 
     public String asString() {
-      return this.stream()
-              .map(String::valueOf)
-              .collect(joining());
+      return this.stream().map(String::valueOf).collect(joining());
     }
 
     public Stream<Integer> stream() {
@@ -187,25 +142,19 @@ public class ISBNConverter {
     }
 
     public Numbers append(Number n) {
-      final var next = Stream
-              .concat(this.stream(), Stream.of(n))
-              .collect(toList());
+      final var next = Stream.concat(this.stream(), Stream.of(n)).collect(toList());
 
       return Numbers.from(next);
     }
 
     public Numbers prepend(Number n) {
-      final var next = Stream
-              .concat(Stream.of(n), this.stream())
-              .collect(toList());
+      final var next = Stream.concat(Stream.of(n), this.stream()).collect(toList());
 
       return Numbers.from(next);
     }
 
     public Numbers init() {
-      final var init = this.stream()
-              .limit(this.numbers.size() - 1)
-              .collect(toList());
+      final var init = this.stream().limit(this.numbers.size() - 1).collect(toList());
 
       return new Numbers(init);
     }
