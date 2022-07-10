@@ -5,14 +5,9 @@ import static java.util.stream.Stream.of;
 
 public class SpinWords {
 
-    private static final String ON = " ";
-
-    public String spinWords(String sentence) {
-        return of(sentence.split(ON)).map(word -> {
-            if (word.length() > 5) {
-                return new StringBuilder(word).reverse();
-            }
-            return word;
-        }).collect(joining(ON));
-    }
+  public String spinWords(String sentence) {
+    return of(sentence.split(" "))
+            .map(word -> word.length() > 4 ? new StringBuilder(word).reverse() : word)
+            .collect(joining(" "));
+  }
 }
